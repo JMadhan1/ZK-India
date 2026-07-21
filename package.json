@@ -1,0 +1,28 @@
+{
+  "name": "zkgate-india",
+  "version": "1.0.0",
+  "description": "India's First Indigenous Zero-Knowledge Identity Layer",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "verifier-portal",
+    "sdk",
+    "circuits"
+  ],
+  "scripts": {
+    "dev": "concurrently -n frontend,verifier,backend -c cyan,magenta,yellow \"npm run dev:frontend\" \"npm run dev:verifier\" \"npm run dev:backend\"",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:verifier": "npm --workspace verifier-portal run dev",
+    "dev:backend": "cd backend && python -m uvicorn main:app --reload --port 8000",
+    "build:circuits": "bash scripts/build_circuits.sh",
+    "test": "bash scripts/run_tests.sh",
+    "test:circuits": "npm --workspace circuits run test",
+    "e2e": "node scripts/e2e_demo.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "_comment": [
+    "Pre-computed circuit witnesses for the demo. Field names match the circom",
+    "signal names exactly, so these can be fed straight to snarkjs.",
+    "aadhaar_secret is the Poseidon-domain secret derived from the citizen's",
+    "Aadhaar reference id; it never leaves the device and is not recoverable from",
+    "the published nullifier."
+  ],
+  "test_age_proof": {
+    "description": "Age >= 18 for Madhan Kumar (DOB 10-07-1998), verified on 2026-07-10",
+    "circuit": "ageProof",
+    "input": {
+      "dob_year": "1998",
+      "dob_month": "7",
+      "dob_day": "10",
+      "signature_valid": "1",
+      "aadhaar_secret": "12345678901234567890",
+      "age_threshold": "18",
+      "current_year": "2026",
+      "current_month": "7",
+      "current_day": "10",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "1",
+      "note": "Turns 28 on the verification date itself — exercises the birthday-boundary path."
+    }
+  },
+  "test_age_proof_underage": {
+    "description": "Age >= 18 for Minor Test (DOB 01-01-2015) — must be UNPROVABLE",
+    "circuit": "ageProof",
+    "input": {
+      "dob_year": "2015",
+      "dob_month": "1",
+      "dob_day": "1",
+      "signature_valid": "1",
+      "aadhaar_secret": "98765432109876543210",
+      "age_threshold": "18",
+      "current_year": "2026",
+      "current_month": "7",
+      "current_day": "10",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "unprovable",
+      "note": "Witness generation must fail. The circuit constrains age >= threshold, so no proof exists."
+    }
+  },
+  "test_location_proof": {
+    "description": "Andhra Pradesh resident (state code 28), district and pincode unconstrained",
+    "circuit": "locationProof",
+    "input": {
+      "state_code": "28",
+      "district_code": "2865171",
+      "pincode": "517001",
+      "signature_valid": "1",
+      "aadhaar_secret": "12345678901234567890",
+      "required_state_code": "28",
+      "required_district_code": "0",
+      "required_pincode": "0",
+      "proof_level": "2",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "1",
+      "proved_state_code": "28",
+      "note": "0 in a required_* field means 'any' — the citizen reveals state only, not district or pincode."
+    }
+  },
+  "test_location_proof_wrong_state": {
+    "description": "Maharashtra resident (27) attempting to prove AP residency (28) — must be UNPROVABLE",
+    "circuit": "locationProof",
+    "input": {
+      "state_code": "27",
+      "district_code": "2794402",
+      "pincode": "400001",
+      "signature_valid": "1",
+      "aadhaar_secret": "11111222223333344444",
+      "required_state_code": "28",
+      "required_district_code": "0",
+      "required_pincode": "0",
+      "proof_level": "2",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "unprovable"
+    }
+  },
+  "test_citizenship_proof": {
+    "description": "Holds a UIDAI-signed Aadhaar — nothing else revealed",
+    "circuit": "citizenshipProof",
+    "input": {
+      "signature_valid": "1",
+      "aadhaar_secret": "12345678901234567890",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "1"
+    }
+  },
+  "test_compound_proof": {
+    "description": "Banking KYC: Indian citizen AND 18+ AND Andhra Pradesh resident, in one proof",
+    "circuit": "compoundProof",
+    "input": {
+      "dob_year": "1998",
+      "dob_month": "7",
+      "dob_day": "10",
+      "state_code": "28",
+      "district_code": "2865171",
+      "pincode": "517001",
+      "signature_valid": "1",
+      "aadhaar_secret": "12345678901234567890",
+      "age_threshold": "18",
+      "current_year": "2026",
+      "current_month": "7",
+      "current_day": "10",
+      "required_state_code": "28",
+      "required_district_code": "0",
+      "verifier_id": "99999",
+      "expiry_timestamp": "1783699200"
+    },
+    "expected": {
+      "is_valid": "1",
+      "proved_state_code": "28"
+    }
+  }
+}

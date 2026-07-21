@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "Public-signal layout for every circuit. THIS FILE IS THE CONTRACT between",
+    "the circuits, the backend verifier and the SDK. snarkjs emits publicSignals",
+    "as a flat array of strings with no names attached, so if these indices drift",
+    "from the .circom sources the backend will silently read the wrong field —",
+    "e.g. mistake a pincode for an age threshold — and still report the proof as",
+    "cryptographically valid. It would be a correctness bug with no error message.",
+    "",
+    "Order is fixed by circom: public OUTPUTS first (in declaration order), then",
+    "public INPUTS (in declaration order). Regenerate with scripts/check_layout.mjs,",
+    "which asserts these against freshly generated proofs; tests/test_layout.py and",
+    "the circuit tests both fail if they disagree."
+  ],
+  "circuits": {
+    "age_proof": {
+      "circuit": "ageProof",
+      "n_public": 10,
+      "signals": [
+        "is_valid",
+        "nullifier",
+        "age_threshold",
+        "current_year",
+        "current_month",
+        "current_day",
+        "verifier_id",
+        "expiry_timestamp",
+        "issuer_pubkey_ax",
+        "issuer_pubkey_ay"
+      ],
+      "claims": ["age_above_18", "age_above_21", "age_above_60", "voter_eligible"],
+      "_note": "issuer_pubkey_ax/ay added when the signature_valid stub was replaced by an in-circuit EdDSA issuer-credential check — see circuits/src/helpers/issuerCredential.circom and docs/UIDAI_INTEGRATION.md. Regenerate the age_proof verification key and re-run scripts/check_layout.mjs after recompiling."
+    },
+    "location_proof": {
+      "circuit": "locationProof",
+      "n_public": 9,
+      "signals": [
+        "is_valid",
+        "nullifier",
+        "proved_state_code",
+        "required_state_code",
+        "required_district_code",
+        "required_pincode",
+        "proof_level",
+        "verifier_id",
+        "expiry_timestamp"
+      ],
+      "claims": ["state_resident", "district_resident"]
+    },
+    "citizenship_proof": {
+      "circuit": "citizenshipProof",
+      "n_public": 4,
+      "signals": [
+        "is_valid",
+        "nullifier",
+        "verifier_id",
+        "expiry_timestamp"
+      ],
+      "claims": ["india_citizen"]
+    },
+    "compound_proof": {
+      "circuit": "compoundProof",
+      "n_public": 11,
+      "signals": [
+        "is_valid",
+        "nullifier",
+        "proved_state_code",
+        "age_threshold",
+        "current_year",
+        "current_month",
+        "current_day",
+        "required_state_code",
+        "required_district_code",
+        "verifier_id",
+        "expiry_timestamp"
+      ],
+      "claims": ["compound_kyc"]
+    },
+    "pan_proof": {
+      "circuit": "panProof",
+      "n_public": 5,
+      "signals": [
+        "is_valid",
+        "nullifier",
+        "pan_pseudonym",
+        "verifier_id",
+        "expiry_timestamp"
+      ],
+      "claims": ["pan_holder"]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@zkgate/sdk",
+  "version": "1.0.0",
+  "description": "ZKGate India SDK — parse Aadhaar XML, generate ZK proofs, verify them",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./encoding": "./src/encoding.js",
+    "./aadhaar": "./src/aadhaar.js",
+    "./prover": "./src/prover.js",
+    "./verifier": "./src/verifier.js"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "snarkjs": "^0.7.4",
+    "circomlibjs": "^0.1.7"
+  },
+  "files": ["src"],
+  "license": "MIT"
+}

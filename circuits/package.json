@@ -1,0 +1,16 @@
+{
+  "name": "@zkgate/circuits",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ZKGate India — Circom circuits",
+  "scripts": {
+    "build": "bash ../scripts/build_circuits.sh",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5"
+  },
+  "devDependencies": {
+    "snarkjs": "^0.7.4"
+  }
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfflinePaperlessKyc referenceId="xxxx1234567890" ts="2026-07-10T14:23:00" ver="1.0">
+  <UidData uid="xxxx-xxxx-3632">
+    <Poi dob="10-07-1998" gender="M" name="Madhan Kumar"/>
+    <Poa co="S/O Suresh Kumar" dist="Chittoor" house="12/4"
+         lm="Near APSRTC Bus Stand" loc="Ganesh Nagar"
+         pc="517001" po="Chittoor HO"
+         state="Andhra Pradesh" street="MG Road"
+         subdist="Chittoor" vtc="Chittoor"/>
+    <Pht>iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==</Pht>
+  </UidData>
+  <Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+    </ds:SignedInfo>
+    <ds:SignatureValue>SAMPLE_SIGNATURE_FOR_DEMO_PURPOSES_ONLY_NOT_REAL_UIDAI_SIGNATURE</ds:SignatureValue>
+  </Signature>
+</OfflinePaperlessKyc>

@@ -1,0 +1,39 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.local
+.env.*.local
+
+# ZK artifacts — large binaries, regenerate with `npm run build:circuits`
+*.zkey
+*.ptau
+*.r1cs
+*.sym
+circuits/build/
+
+# Verification keys ARE committed (small, needed by backend/frontend).
+# Ignore the *contents* of keys/ rather than the directory itself — git cannot
+# re-include a file whose parent directory is excluded.
+circuits/keys/*
+!circuits/keys/*_verification_key.json
+!circuits/keys/signal_layout.json
+
+# Next.js / build output
+build/
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# Frontend circuit artifacts (copied by build script)
+frontend/public/circuits/*.wasm
+frontend/public/circuits/*.zkey
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
