@@ -3,6 +3,7 @@ pragma circom 2.1.0;
 include "circomlib/circuits/comparators.circom";
 include "helpers/dateUtils.circom";
 include "helpers/nullifier.circom";
+include "helpers/issuerCredential.circom";
 
 /*
  * ZKGate India — Compound Proof (banking KYC)
@@ -25,6 +26,19 @@ include "helpers/nullifier.circom";
  * three facts are provably about the same human being. Splitting the claims
  * across circuits would mean re-deriving that binding by hand, and getting it
  * wrong is silent.
+ *
+ * On the issuer credential (replaces the old signature_valid stub):
+ *
+ *   The commitment the issuer signs covers dob_year/dob_month/dob_day AND
+ *   state_code/district_code, alongside the secret — see
+ *   helpers/issuerCredential.circom's IssuerCredentialCheckN(5). Binding all
+ *   five preserves the "provably one person" property this circuit exists
+ *   for: it is not enough that SOME attributes were genuinely attested, it
+ *   must be THESE age and location attributes, together, under one
+ *   signature, or a citizen could mix a genuinely-attested DOB with a
+ *   self-chosen state. pincode is deliberately left out of the commitment,
+ *   same as it's left unconstrained below — banking KYC here never asks for
+ *   pincode precision, so there is nothing to attest about it.
  */
 template CompoundProof() {
     // ── Private ──
@@ -34,8 +48,10 @@ template CompoundProof() {
     signal input state_code;
     signal input district_code;
     signal input pincode;
-    signal input signature_valid;
     signal input aadhaar_secret;
+    signal input issuer_sig_r8x;
+    signal input issuer_sig_r8y;
+    signal input issuer_sig_s;
 
     // ── Public ──
     signal input age_threshold;
@@ -46,14 +62,27 @@ template CompoundProof() {
     signal input required_district_code;
     signal input verifier_id;
     signal input expiry_timestamp;
+    signal input issuer_pubkey_ax;
+    signal input issuer_pubkey_ay;
 
     // ── Public outputs ──
     signal output is_valid;
     signal output nullifier;
     signal output proved_state_code;
 
-    // ── Claim 1: signature ──
-    signature_valid === 1;
+    // ── Claim 1: a genuine issuer credential over (dob, state, district, secret) ──
+    component cred = IssuerCredentialCheckN(5);
+    cred.attrs[0]          <== dob_year;
+    cred.attrs[1]          <== dob_month;
+    cred.attrs[2]          <== dob_day;
+    cred.attrs[3]          <== state_code;
+    cred.attrs[4]          <== district_code;
+    cred.aadhaar_secret    <== aadhaar_secret;
+    cred.issuer_sig_r8x    <== issuer_sig_r8x;
+    cred.issuer_sig_r8y    <== issuer_sig_r8y;
+    cred.issuer_sig_s      <== issuer_sig_s;
+    cred.issuer_pubkey_ax  <== issuer_pubkey_ax;
+    cred.issuer_pubkey_ay  <== issuer_pubkey_ay;
 
     // ── Claim 2: age ──
     component dob_ok = ValidDate();
@@ -112,10 +141,11 @@ template CompoundProof() {
 
     proved_state_code <== state_code * (1 - state_zero.out);
 
-    // ── All three, or nothing ──
-    signal age_and_sig <== signature_valid * age_check.out;
+    // ── All three, or nothing. The signature factor is gone: the issuer
+    //    credential check above is already a hard assertion, so only the age
+    //    and location comparisons remain to route through is_valid. ──
     signal loc <== state_valid * district_valid;
-    is_valid <== age_and_sig * loc;
+    is_valid <== age_check.out * loc;
     is_valid === 1;
 }
 
@@ -127,5 +157,7 @@ component main {public [
     required_state_code,
     required_district_code,
     verifier_id,
-    expiry_timestamp
+    expiry_timestamp,
+    issuer_pubkey_ax,
+    issuer_pubkey_ay
 ]} = CompoundProof();

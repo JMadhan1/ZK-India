@@ -32,6 +32,10 @@ out/
 frontend/public/circuits/*.wasm
 frontend/public/circuits/*.zkey
 
+# Demo issuer key (scripts/issuer/issue_credential.mjs) — prototype-only key
+# material; never a place a production key should live. See its own header.
+scripts/issuer/demo_issuer_key.json
+
 # OS / editor
 .DS_Store
 Thumbs.db

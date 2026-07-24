@@ -12,7 +12,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CIRCUITS="$ROOT/circuits"
 SNARKJS="npx --no-install snarkjs"
-PTAU_POWER=12   # 2^12 = 4096 constraints; the largest circuit uses ~1,125
+PTAU_POWER=16   # 2^16 = 65536 constraints; ageProof's issuer-credential EdDSA-Poseidon
+                # check pushed it to ~9,639 wires (needs >2^15), so this leaves headroom
 
 CIRCUIT_NAMES=(ageProof locationProof citizenshipProof compoundProof panProof)
 

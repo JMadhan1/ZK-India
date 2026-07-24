@@ -33,7 +33,7 @@
     },
     "location_proof": {
       "circuit": "locationProof",
-      "n_public": 9,
+      "n_public": 11,
       "signals": [
         "is_valid",
         "nullifier",
@@ -43,24 +43,30 @@
         "required_pincode",
         "proof_level",
         "verifier_id",
-        "expiry_timestamp"
+        "expiry_timestamp",
+        "issuer_pubkey_ax",
+        "issuer_pubkey_ay"
       ],
-      "claims": ["state_resident", "district_resident"]
+      "claims": ["state_resident", "district_resident"],
+      "_note": "issuer_pubkey_ax/ay added when the signature_valid stub was replaced by an in-circuit EdDSA issuer-credential check over (state_code, district_code, pincode, secret) — see IssuerCredentialCheckN(3) in circuits/src/helpers/issuerCredential.circom."
     },
     "citizenship_proof": {
       "circuit": "citizenshipProof",
-      "n_public": 4,
+      "n_public": 6,
       "signals": [
         "is_valid",
         "nullifier",
         "verifier_id",
-        "expiry_timestamp"
+        "expiry_timestamp",
+        "issuer_pubkey_ax",
+        "issuer_pubkey_ay"
       ],
-      "claims": ["india_citizen"]
+      "claims": ["india_citizen"],
+      "_note": "issuer_pubkey_ax/ay added when the signature_valid stub was replaced by an in-circuit EdDSA issuer-credential check over (secret) only — see IssuerCredentialCheckSecretOnly() in circuits/src/helpers/issuerCredential.circom."
     },
     "compound_proof": {
       "circuit": "compoundProof",
-      "n_public": 11,
+      "n_public": 13,
       "signals": [
         "is_valid",
         "nullifier",
@@ -72,21 +78,27 @@
         "required_state_code",
         "required_district_code",
         "verifier_id",
-        "expiry_timestamp"
+        "expiry_timestamp",
+        "issuer_pubkey_ax",
+        "issuer_pubkey_ay"
       ],
-      "claims": ["compound_kyc"]
+      "claims": ["compound_kyc"],
+      "_note": "issuer_pubkey_ax/ay added when the signature_valid stub was replaced by an in-circuit EdDSA issuer-credential check over (dob_year, dob_month, dob_day, state_code, district_code, secret) — see IssuerCredentialCheckN(5) in circuits/src/helpers/issuerCredential.circom."
     },
     "pan_proof": {
       "circuit": "panProof",
-      "n_public": 5,
+      "n_public": 7,
       "signals": [
         "is_valid",
         "nullifier",
         "pan_pseudonym",
         "verifier_id",
-        "expiry_timestamp"
+        "expiry_timestamp",
+        "issuer_pubkey_ax",
+        "issuer_pubkey_ay"
       ],
-      "claims": ["pan_holder"]
+      "claims": ["pan_holder"],
+      "_note": "issuer_pubkey_ax/ay added when BOTH the signature_valid and pan_linked stubs were replaced by a single in-circuit EdDSA issuer-credential check over (pan_hash, secret) — see IssuerCredentialCheckN(1) in circuits/src/helpers/issuerCredential.circom. There is no separate pan_linked signal any more; the credential's existence is the linkage attestation."
     }
   }
 }

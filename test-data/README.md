@@ -21,12 +21,20 @@ endpoint that would accept one.
 
 ## Demo mode vs. production
 
-The synthetic XMLs have no real signature, so the portal cannot check one. In demo mode it sets the
-circuit's `signature_valid` input to 1 and tags the proof bundle `"demo": true`. The backend
-honours that tag: demo proofs verify cryptographically (the Groth16 maths is real) but are reported
-as `trust_level: "demo"` and a production verifier is expected to reject them.
+The synthetic XMLs have no real UIDAI signature. No circuit here takes a
+client-asserted `signature_valid` bit any more — every one of them requires a
+genuine EdDSA-Poseidon signature from a registered issuer key over the exact
+attributes being proved (see `scripts/issuer/issue_credential.mjs` and
+`docs/UIDAI_INTEGRATION.md`). What stays "demo" is the issuer key itself: the
+demo issuer key (`scripts/issuer/demo_issuer_key.json`, gitignored) is not
+registered in `backend/services/issuer_registry.py`, so proofs signed with it
+verify cryptographically (the Groth16 maths is real) but report
+`trust_level: "demo"`, and a production verifier is expected to require
+`"attested"` instead.
 
-**This is the single gap between this prototype and a deployable system.** The ZK layer is real; the
-attestation that the data came from UIDAI is stubbed. `docs/UIDAI_INTEGRATION.md` sets out what
-closing it takes — in short, the RSA-SHA256 XMLDSig check has to move *inside* the circuit so that
-`signature_valid` is a proven fact rather than a claim the citizen's own client makes about itself.
+**The remaining gap between this prototype and a deployable system** is that
+the issuer's signature attests "I, the issuer, checked UIDAI's signature at
+enrolment" — not a UIDAI signature verified in-circuit directly.
+`docs/UIDAI_INTEGRATION.md` sets out that trust model precisely, and
+`docs/XML_SIGNATURE_SPIKE.md` estimates what moving the RSA-SHA256 XMLDSig
+check itself inside the circuit would cost.

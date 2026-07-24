@@ -78,3 +78,71 @@ template IssuerCredentialCheck() {
     // has to remember to check. Same non-satisfiability discipline as the
     // rest of this codebase (see the header note in ageProof.circom).
 }
+
+/*
+ * Same construction as IssuerCredentialCheck above, generalised to an
+ * arbitrary N-attribute commitment: commitment = Poseidon(attrs[0..N-1],
+ * aadhaar_secret). Used by every claim circuit whose attested attributes
+ * aren't the fixed (dob_year, dob_month, dob_day) triple ageProof uses —
+ * e.g. locationProof signs (state_code, district_code, pincode), panProof
+ * signs (pan_hash). Keeping ageProof on its own concrete template above
+ * avoids disturbing an already-working, already-keyed circuit; every other
+ * circuit closing its signature_valid stub uses this one instead of hand
+ * duplicating the EdDSA-Poseidon plumbing per circuit.
+ */
+template IssuerCredentialCheckN(N) {
+    signal input attrs[N];
+    signal input aadhaar_secret;
+    signal input issuer_sig_r8x;
+    signal input issuer_sig_r8y;
+    signal input issuer_sig_s;
+    signal input issuer_pubkey_ax;
+    signal input issuer_pubkey_ay;
+    signal output commitment;
+
+    component commit = Poseidon(N + 1);
+    for (var i = 0; i < N; i++) {
+        commit.inputs[i] <== attrs[i];
+    }
+    commit.inputs[N] <== aadhaar_secret;
+    commitment <== commit.out;
+
+    component sigCheck = EdDSAPoseidonVerifier();
+    sigCheck.enabled <== 1;
+    sigCheck.Ax  <== issuer_pubkey_ax;
+    sigCheck.Ay  <== issuer_pubkey_ay;
+    sigCheck.S   <== issuer_sig_s;
+    sigCheck.R8x <== issuer_sig_r8x;
+    sigCheck.R8y <== issuer_sig_r8y;
+    sigCheck.M   <== commitment;
+}
+
+/*
+ * Secret-only variant: commitment = Poseidon(aadhaar_secret). Used by
+ * citizenshipProof, whose only claim is "this secret belongs to a real,
+ * issuer-attested Aadhaar holder" — no DOB, no address, nothing else to
+ * bind in. A dedicated template rather than IssuerCredentialCheckN(0)
+ * sidesteps zero-length-array edge cases in circom for no real cost.
+ */
+template IssuerCredentialCheckSecretOnly() {
+    signal input aadhaar_secret;
+    signal input issuer_sig_r8x;
+    signal input issuer_sig_r8y;
+    signal input issuer_sig_s;
+    signal input issuer_pubkey_ax;
+    signal input issuer_pubkey_ay;
+    signal output commitment;
+
+    component commit = Poseidon(1);
+    commit.inputs[0] <== aadhaar_secret;
+    commitment <== commit.out;
+
+    component sigCheck = EdDSAPoseidonVerifier();
+    sigCheck.enabled <== 1;
+    sigCheck.Ax  <== issuer_pubkey_ax;
+    sigCheck.Ay  <== issuer_pubkey_ay;
+    sigCheck.S   <== issuer_sig_s;
+    sigCheck.R8x <== issuer_sig_r8x;
+    sigCheck.R8y <== issuer_sig_r8y;
+    sigCheck.M   <== commitment;
+}

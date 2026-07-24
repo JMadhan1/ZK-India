@@ -11,6 +11,61 @@ import {
   generateProof,
   verifySignature,
 } from "@zkgate/sdk";
+import { buildEddsa, buildPoseidon } from "circomlibjs";
+
+// ── DEMO issuer key ──────────────────────────────────────────────────────
+//
+// No circuit in this repo has a client-asserted signature_valid stub any
+// more (see docs/UIDAI_INTEGRATION.md) — every claim requires a genuine
+// EdDSA issuer credential. In production that credential is issued ONCE, by
+// a licensed AUA/KUA, at enrolment time (scripts/issuer/issue_credential.mjs
+// is the reference implementation), and the citizen's wallet simply holds
+// and replays it — the private key never touches this file.
+//
+// This demo has no enrolment step or issuer backend, so it signs locally
+// with a hardcoded, publicly-known demo key, purely to keep the browser demo
+// working end to end. This is exactly as trustworthy as the old
+// signature_valid=1 stub was — i.e. not at all — and is honestly reported as
+// such: this key is never registered in backend/services/issuer_registry.py,
+// so every proof produced here resolves to trust_level "demo", the same as
+// before. A real deployment must replace this with a call to a real issuer
+// service; the private key must never live in browser code.
+const DEMO_ISSUER_PRVKEY_HEX =
+  "44454d4f2d4f4e4c592d4b45592d4e4f542d464f522d50524f44554354494f4e21";
+
+async function demoIssuerCredential(claimType: string, fields: ParsedAadhaar["fields"], secret: bigint | string) {
+  const eddsa = await buildEddsa();
+  const poseidon = await buildPoseidon();
+  const prvKey = Buffer.from(DEMO_ISSUER_PRVKEY_HEX, "hex");
+
+  // Commitment inputs must match the exact per-circuit shape the circuit
+  // itself signs over — see circuits/src/helpers/issuerCredential.circom.
+  let attrs: (string | number)[];
+  if (claimType.startsWith("age_above")) {
+    attrs = [fields.dob_year, fields.dob_month, fields.dob_day];
+  } else if (claimType === "state_resident" || claimType === "district_resident") {
+    attrs = [fields.state_code, fields.district_code, fields.pincode];
+  } else if (claimType === "india_citizen") {
+    attrs = [];
+  } else if (claimType === "compound_kyc") {
+    attrs = [fields.dob_year, fields.dob_month, fields.dob_day, fields.state_code, fields.district_code];
+  } else {
+    throw new Error(`no demo issuer commitment defined for claim type: ${claimType}`);
+  }
+
+  const inputs = [...attrs.map((a) => BigInt(a)), BigInt(secret)];
+  const commitment = poseidon(inputs);
+  const sig = eddsa.signPoseidon(prvKey, commitment);
+  const pub = eddsa.prv2pub(prvKey);
+
+  return {
+    r8x: eddsa.F.toObject(sig.R8[0]).toString(),
+    r8y: eddsa.F.toObject(sig.R8[1]).toString(),
+    s: sig.S.toString(),
+    pubkeyAx: eddsa.F.toObject(pub[0]).toString(),
+    pubkeyAy: eddsa.F.toObject(pub[1]).toString(),
+  };
+}
 
 export type ParsedAadhaar = ReturnType<typeof parseAadhaarXml>;
 
@@ -63,12 +118,14 @@ export async function prove(opts: {
     proofLevel: 2,
   };
 
+  const issuerCredential = await demoIssuerCredential(claimType, parsed.fields, secret);
+
   const witnessInput = buildWitness({
     claimType,
     fields: parsed.fields,
     secret,
     request,
-    signatureValid: sig.valid,
+    issuerCredential,
   });
 
   const result = await generateProof({

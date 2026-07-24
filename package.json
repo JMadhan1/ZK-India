@@ -17,7 +17,8 @@
     "build:circuits": "bash scripts/build_circuits.sh",
     "test": "bash scripts/run_tests.sh",
     "test:circuits": "npm --workspace circuits run test",
-    "e2e": "node scripts/e2e_demo.mjs"
+    "e2e": "node scripts/e2e_demo.mjs",
+    "regenerate:fixtures": "node scripts/regenerate_fixtures.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

@@ -60,7 +60,7 @@ def bundle(proof_entry, claim_type, *, demo=True, verifier_id="99999", expected=
             "proof": proof_entry["proof"],
             "public_signals": proof_entry["public_signals"],
             "claim_type": claim_type,
-            "generated_at": 1783699000,
+            "generated_at": 2068070200,
             "demo": demo,
         },
         "verifier_id": verifier_id,

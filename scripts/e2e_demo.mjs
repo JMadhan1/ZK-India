@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import {
   parseAadhaarXml, deriveSecret, buildWitness, generateProof, verifySignature,
 } from "@zkgate/sdk";
+import { loadOrCreateIssuerKey, issueAgeCredential } from "./issuer/issue_credential.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
@@ -74,9 +75,17 @@ async function main() {
   const expiry = Math.floor(Date.now() / 1000) + 3600;
 
   step("STEP 2-3 — Build witness and generate an age>=18 proof");
+  // No circuit has a client-asserted signature_valid stub any more — the
+  // witness needs a genuine issuer credential over the exact DOB being
+  // proved (see docs/UIDAI_INTEGRATION.md).
+  const issuerKey = loadOrCreateIssuerKey();
+  const issuerCredential = await issueAgeCredential(issuerKey, {
+    dob_year: parsed.fields.dob_year, dob_month: parsed.fields.dob_month,
+    dob_day: parsed.fields.dob_day, secret,
+  });
   const witness = buildWitness({
     claimType: "age_above_18", fields: parsed.fields, secret,
-    request: { verifierId, expiry, ageThreshold: 18 }, signatureValid: sig.valid,
+    request: { verifierId, expiry, ageThreshold: 18 }, issuerCredential,
   });
   const t0 = Date.now();
   const proofResult = await generateProof({ claimType: "age_above_18", witnessInput: witness, ...wasmZkey("age_proof") });

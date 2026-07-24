@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { prove, expectUnprovable, adult, today, session, LAYOUT } from "./helpers.mjs";
+import { prove, expectUnprovable, adult, today, session, LAYOUT, ageCredFields, tamperSignature } from "./helpers.mjs";
 
 const AGE = "age_proof";
 
@@ -39,10 +39,13 @@ test("the DOB never appears in the public signals", async () => {
   assert.ok(!publicSignals.includes("28"));
 });
 
-test("minor CANNOT produce an age >= 18 proof", async () => {
+test("minor CANNOT produce an age >= 18 proof, even with a genuine issuer credential", async () => {
+  // A genuine credential over the MINOR's real DOB — the signature is not the
+  // thing failing here, the age comparator inside the circuit is.
   await expectUnprovable(AGE, {
     dob_year: 2015, dob_month: 1, dob_day: 1,
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(2015, 1, 1)),
     ...today, ...session, age_threshold: 18,
   });
 });
@@ -53,7 +56,8 @@ test("birthday boundary: 17y364d cannot prove 18", async () => {
   // through. This is the single most likely bug in an age circuit.
   await expectUnprovable(AGE, {
     dob_year: 2008, dob_month: 12, dob_day: 31,
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(2008, 12, 31)),
     ...today, ...session, age_threshold: 18,
   });
 });
@@ -61,7 +65,8 @@ test("birthday boundary: 17y364d cannot prove 18", async () => {
 test("birthday boundary: proof succeeds ON the birthday itself", async () => {
   const { verified, signals } = await prove(AGE, {
     dob_year: 2008, dob_month: 7, dob_day: 14, // turns 18 exactly today
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(2008, 7, 14)),
     ...today, ...session, age_threshold: 18,
   });
   assert.equal(verified, true);
@@ -71,14 +76,31 @@ test("birthday boundary: proof succeeds ON the birthday itself", async () => {
 test("birthday boundary: one day short of 18 fails", async () => {
   await expectUnprovable(AGE, {
     dob_year: 2008, dob_month: 7, dob_day: 15, // turns 18 tomorrow
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(2008, 7, 15)),
     ...today, ...session, age_threshold: 18,
   });
 });
 
-test("an unsigned (forged) Aadhaar cannot produce a proof", async () => {
+test("a credential without a genuine issuer signature cannot produce a proof", async () => {
+  // Same attributes as `adult`, but the signature is tampered — a stand-in for
+  // "no real issuer ever signed this" (what signature_valid: 0 used to mean).
   await expectUnprovable(AGE, {
-    ...adult, signature_valid: 0, ...today, ...session, age_threshold: 18,
+    ...adult, ...tamperSignature(adult), ...today, ...session, age_threshold: 18,
+  });
+});
+
+test("a genuine signature over a DIFFERENT dob cannot be reused for this one", async () => {
+  // The attacker holds a real credential (for their true 1998 DOB) and tries to
+  // present a younger DOB while keeping the old signature. The commitment no
+  // longer matches, so the EdDSA check fails — this is the specific attack
+  // binding the signed attributes to the proved attributes is meant to stop.
+  await expectUnprovable(AGE, {
+    dob_year: 2015, dob_month: 1, dob_day: 1, // claims to be a minor's DOB
+    aadhaar_secret: adult.aadhaar_secret,
+    issuer_sig_r8x: adult.issuer_sig_r8x, issuer_sig_r8y: adult.issuer_sig_r8y, issuer_sig_s: adult.issuer_sig_s,
+    issuer_pubkey_ax: adult.issuer_pubkey_ax, issuer_pubkey_ay: adult.issuer_pubkey_ay,
+    ...today, ...session, age_threshold: 18,
   });
 });
 
@@ -88,7 +110,8 @@ test("a future date of birth cannot produce a proof", async () => {
   // comparator built on Num2Bits. ValidDate + the not_future check close it.
   await expectUnprovable(AGE, {
     dob_year: 2030, dob_month: 1, dob_day: 1,
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(2030, 1, 1)),
     ...today, ...session, age_threshold: 18,
   });
 });
@@ -96,7 +119,8 @@ test("a future date of birth cannot produce a proof", async () => {
 test("a nonsense month cannot produce a proof", async () => {
   await expectUnprovable(AGE, {
     dob_year: 1998, dob_month: 13, dob_day: 10,
-    signature_valid: 1, aadhaar_secret: adult.aadhaar_secret,
+    aadhaar_secret: adult.aadhaar_secret,
+    ...(await ageCredFields(1998, 13, 10)),
     ...today, ...session, age_threshold: 18,
   });
 });

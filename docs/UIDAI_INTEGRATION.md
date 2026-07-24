@@ -4,6 +4,17 @@ This is the single most important document for anyone assessing how close this
 prototype is to a deployable system. Read it before believing — or doubting — any
 claim about what ZKGate proves.
 
+> **Status update:** all five circuits have been upgraded off the stub described
+> below, using "Option 2" (see "How to close it"). Every one of them now verifies
+> a real EdDSA-Poseidon signature, in-circuit, from a named issuer key over a
+> commitment to the exact attributes that circuit's claim depends on — see
+> `circuits/src/helpers/issuerCredential.circom`, `scripts/issuer/issue_credential.mjs`,
+> and `backend/services/issuer_registry.py`. This closes Property A from
+> `EXECUTION_PLAN.md` §1 fully — zero occurrences of the `signature_valid` stub
+> remain anywhere in `circuits/src/`. What these proofs are is **issuer-verified**,
+> not UIDAI-verified — see "What is still NOT closed" below, and
+> `docs/XML_SIGNATURE_SPIKE.md` for what closing that further gap would cost.
+
 ## What is real
 
 The **zero-knowledge layer is fully real**. Proofs are genuine Groth16 proofs over
@@ -13,22 +24,40 @@ tampered proofs, off-curve points, and out-of-field signals. A citizen who is 17
 genuinely cannot produce an `age ≥ 18` proof. Replays are genuinely caught.
 Nothing about the citizen is genuinely transmitted.
 
-## What is stubbed
+## What is still NOT closed
 
-Every circuit takes a private input `signature_valid` and asserts it equals 1. In
-a real deployment, `signature_valid = 1` must mean *"the Aadhaar offline eKYC XML
-carried a valid RSA-SHA256 XMLDSig signature from UIDAI."* In the prototype, the
-citizen's own client sets that bit (`sdk/src/aadhaar.js → verifySignature`), and
-for the synthetic test XMLs it always sets it to 1 in **demo mode**.
+All five circuits now require a genuine EdDSA-Poseidon signature from a named
+issuer key — the `signature_valid` self-asserted bit described in the rest of
+this section is gone (see the status update at the top of this document). What
+remains is a smaller, but still real, gap: **these circuits verify that a
+registered *issuer* signed the citizen's attributes; they do not verify UIDAI's
+own RSA-SHA256 signature on the Aadhaar offline eKYC XML in-circuit.**
 
-Concretely, the gap is this: **a malicious citizen could fabricate an XML with any
-date of birth, set `signature_valid = 1` themselves, and produce a
-"valid" proof of a false fact.** The ZK maths would check out; the attestation that
-the underlying data came from UIDAI would be the lie.
+Concretely, the trust chain today is: UIDAI signs the XML → an enrolment issuer
+(an AUA/KUA) checks that signature *once, outside the circuit*, at enrolment time
+→ the issuer signs a commitment to the citizen's attributes with its own EdDSA key
+→ the circuit verifies *that* signature. A citizen can no longer fabricate a date
+of birth and self-assert validity (closing the gap this section originally
+described), but the system's honesty about UIDAI provenance now rests on (a) the
+issuer having genuinely checked UIDAI's signature correctly at enrolment, and (b)
+the issuer's key being genuinely restricted to registered AUAs/KUAs
+(`backend/services/issuer_registry.py`). That is a materially smaller trust
+surface than the old stub, not a zero one — and stating it precisely is the point
+of this document.
 
-The system is honest about this. Every proof built in demo mode is tagged
-`demo: true`, the backend reports `trust_level: "demo"`, and a production verifier
-is expected to refuse demo proofs.
+Every proof from an issuer key this deployment hasn't registered is honestly
+reported as `trust_level: "demo"` rather than `"attested"` — see
+`backend/services/proof_verifier.py`'s `_resolve_trust_level()`.
+
+### What the historical stub looked like (now closed, for context)
+
+Every circuit used to take a private input `signature_valid` and assert it
+equals 1 — a bit the citizen's own client set (`sdk/src/aadhaar.js →
+verifySignature`), unchecked by any math. A malicious citizen could fabricate
+an XML with any date of birth, set `signature_valid = 1` themselves, and
+produce a "valid" proof of a false fact; the ZK maths would check out, and the
+attestation that the underlying data came from anywhere real would be the lie.
+This is the gap Option 2 (below) closed.
 
 ## Why it's stubbed (and not hidden)
 
@@ -76,9 +105,13 @@ a one-time credential issuance that can itself be audited.
   `{valid, demo}`; passing a real key currently throws rather than pretending, so
   the unfinished path is impossible to use by accident.
 - `test-data/uidai_public_key.pem` — instructions to fetch the real UIDAI cert.
-- The `signature_valid` signal exists in every circuit and is already constrained
-  to 1 — so an in-circuit signature check slots in by replacing the assertion with
-  the verification component; the rest of each circuit is unchanged.
+- `circuits/src/helpers/issuerCredential.circom`'s `IssuerCredentialCheck*`
+  templates already establish the pattern an in-circuit UIDAI RSA-SHA256 check
+  would extend: a hard-assert signature verification component whose failure
+  makes the witness unsatisfiable, not a boolean the caller has to remember to
+  check. `docs/XML_SIGNATURE_SPIKE.md` estimates what swapping EdDSA-Poseidon
+  for in-circuit RSA-SHA256-over-canonicalised-XML would cost.
 - The `demo` flag threads from the SDK through the API to `trust_level`, so the day
-  real attestation lands, verifiers flip from accepting `demo` to requiring
-  `attested` with no other change.
+  real UIDAI attestation lands, verifiers flip from accepting `demo` to requiring
+  `attested` with no other change — this is the same mechanism that already
+  distinguishes a registered issuer's key from an unregistered one today.

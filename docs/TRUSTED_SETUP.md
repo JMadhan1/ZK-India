@@ -8,8 +8,9 @@ verify perfectly for that circuit.
 ## What `scripts/build_circuits.sh` does
 
 1. **Powers of Tau (phase 1)** — circuit-independent. Generates a fresh ceremony
-   at 2^12 (4096 constraints; the largest circuit here uses ~1,125), with one
-   contribution seeded from this machine's entropy.
+   at 2^16 (65,536 constraints; `age_proof`, the largest circuit, needs ~19,322
+   after its issuer-credential EdDSA-Poseidon check — see `EXECUTION_PLAN.md`
+   Day 1), with one contribution seeded from this machine's entropy.
 2. **Groth16 setup (phase 2)** — per circuit. Derives each `.zkey` from the phase-1
    output plus one more contribution.
 3. Exports each verification key to JSON and copies the wasm + proving keys to the
@@ -50,7 +51,7 @@ forge. In practice:
 ```bash
 # Confirm a proving key descends from the expected r1cs and ptau
 snarkjs zkey verify circuits/build/ageProof/ageProof.r1cs \
-    circuits/keys/pot12_final.ptau circuits/keys/age_proof_final.zkey
+    circuits/keys/pot16_final.ptau circuits/keys/age_proof_final.zkey
 ```
 
 ## What ships in git

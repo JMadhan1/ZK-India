@@ -1,16 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { prove, expectUnprovable, SECRET, session, LAYOUT } from "./helpers.mjs";
+import { prove, expectUnprovable, SECRET, session, LAYOUT, locationCredFields, tamperSignature } from "./helpers.mjs";
 
 const LOC = "location_proof";
 
 // Madhan Kumar: Chittoor, Andhra Pradesh (census state code 28), pincode 517001.
+const apAttrs = { state_code: 28, district_code: 2865171, pincode: 517001 };
 const ap = {
-  state_code: 28,
-  district_code: 2865171,
-  pincode: 517001,
-  signature_valid: 1,
+  ...apAttrs,
   aadhaar_secret: SECRET,
+  ...(await locationCredFields(apAttrs.state_code, apAttrs.district_code, apAttrs.pincode)),
 };
 
 const ANY = { required_state_code: 0, required_district_code: 0, required_pincode: 0 };
@@ -38,9 +37,10 @@ test("the street address never reaches the public signals", async () => {
 });
 
 test("a Maharashtra resident CANNOT prove AP residency", async () => {
+  const mhAttrs = { state_code: 27, district_code: 2794402, pincode: 400001 };
   await expectUnprovable(LOC, {
-    state_code: 27, district_code: 2794402, pincode: 400001,
-    signature_valid: 1, aadhaar_secret: SECRET,
+    ...mhAttrs, aadhaar_secret: SECRET,
+    ...(await locationCredFields(mhAttrs.state_code, mhAttrs.district_code, mhAttrs.pincode)),
     ...session, ...ANY, required_state_code: 28, proof_level: 2,
   });
 });
@@ -101,8 +101,42 @@ test("proof_level outside 1..4 is rejected", async () => {
   });
 });
 
-test("an unsigned Aadhaar cannot produce a location proof", async () => {
+test("a credential without a genuine issuer signature cannot produce a location proof", async () => {
   await expectUnprovable(LOC, {
-    ...ap, signature_valid: 0, ...session, ...ANY, required_state_code: 28, proof_level: 2,
+    ...ap, ...tamperSignature(ap), ...session, ...ANY, required_state_code: 28, proof_level: 2,
+  });
+});
+
+// Day-3 requirement: binding only the secret would let a citizen keep a
+// genuine signature and swap in a forged state/district/pincode after the
+// fact. The commitment must cover state/district/pincode too, so tampering
+// ANY of them invalidates the signature check even though it "looks" signed.
+test("a tampered state value fails even with an otherwise-genuine issuer signature", async () => {
+  await expectUnprovable(LOC, {
+    // Real signature was issued over state_code=28 (AP) — swap in Maharashtra
+    // while keeping that same signature and pubkey.
+    state_code: 27, district_code: ap.district_code, pincode: ap.pincode,
+    aadhaar_secret: SECRET,
+    issuer_sig_r8x: ap.issuer_sig_r8x, issuer_sig_r8y: ap.issuer_sig_r8y, issuer_sig_s: ap.issuer_sig_s,
+    issuer_pubkey_ax: ap.issuer_pubkey_ax, issuer_pubkey_ay: ap.issuer_pubkey_ay,
+    ...session, ...ANY, required_state_code: 27, proof_level: 2,
+  });
+});
+
+test("a tampered district or pincode also fails even with a genuine state signature", async () => {
+  await expectUnprovable(LOC, {
+    state_code: ap.state_code, district_code: 9999999, pincode: ap.pincode,
+    aadhaar_secret: SECRET,
+    issuer_sig_r8x: ap.issuer_sig_r8x, issuer_sig_r8y: ap.issuer_sig_r8y, issuer_sig_s: ap.issuer_sig_s,
+    issuer_pubkey_ax: ap.issuer_pubkey_ax, issuer_pubkey_ay: ap.issuer_pubkey_ay,
+    ...session, ...ANY, required_state_code: 28, required_district_code: 9999999, proof_level: 3,
+  });
+
+  await expectUnprovable(LOC, {
+    state_code: ap.state_code, district_code: ap.district_code, pincode: 999999,
+    aadhaar_secret: SECRET,
+    issuer_sig_r8x: ap.issuer_sig_r8x, issuer_sig_r8y: ap.issuer_sig_r8y, issuer_sig_s: ap.issuer_sig_s,
+    issuer_pubkey_ax: ap.issuer_pubkey_ax, issuer_pubkey_ay: ap.issuer_pubkey_ay,
+    ...session, ...ANY, required_state_code: 28, required_district_code: ap.district_code, required_pincode: 999999, proof_level: 4,
   });
 });

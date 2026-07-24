@@ -46,9 +46,9 @@ would even accept it.
 
 | Directory | What it is | Status |
 | --- | --- | --- |
-| `circuits/` | 5 Circom circuits (age, location, citizenship, compound KYC, PAN) + Groth16 setup | **29 tests passing** |
-| `backend/` | FastAPI verification API with a real Python Groth16 verifier, nullifier replay-guard, tamper-evident audit chain | **26 tests passing** |
-| `sdk/` | JavaScript SDK: parse Aadhaar XML, derive secret, build witness, generate & submit proofs | **8 tests passing** |
+| `circuits/` | 5 Circom circuits (age, location, citizenship, compound KYC, PAN) + Groth16 setup | All five closed the `signature_valid` stub via a real in-circuit EdDSA issuer-credential check (see caveat below), all five compile cleanly, and all five are **re-keyed** against a freshly regenerated Powers-of-Tau (`circuits/keys/*_final.zkey` / `*_verification_key.json`, 2026-07-24). 34/34 circuit proof-and-tamper tests pass. Regenerate any time with `npm run build:circuits`. |
+| `backend/` | FastAPI verification API with a real Python Groth16 verifier, nullifier replay-guard, tamper-evident audit chain | `trust_level` resolution is now uniformly issuer-registry-driven for all five claim types, not just `age_proof`. Fixtures regenerated against the fresh keys (`backend/tests/fixtures.json`) — **30/30 pytest pass**, including the nullifier replay-guard. Regenerate with `node scripts/regenerate_fixtures.mjs` after `build:circuits`. |
+| `sdk/` | JavaScript SDK: parse Aadhaar XML, derive secret, build witness, generate & submit proofs | Rewritten for the issuer-credential model across all five claim types; 9/9 SDK tests pass and it drives the fresh keys end-to-end via the fixture generator. |
 | `frontend/` | Next.js citizen portal — in-browser proof generation | builds clean |
 | `verifier-portal/` | Next.js verifier portal — request & verify proofs | builds clean |
 | `test-data/` | Synthetic Aadhaar XMLs and fixtures (no real identities) | — |
@@ -129,15 +129,35 @@ asked, then rejects mismatches. Both gates are tested.
 ## The one honest caveat
 
 This prototype proves the **zero-knowledge layer** end to end with real
-cryptography. The single piece it stubs is the **UIDAI signature attestation**: the
-citizen's client asserts `signature_valid = 1` rather than the circuit proving the
-RSA-SHA256 XMLDSig against UIDAI's key *inside* the proof. Every demo proof is
-tagged `trust_level: "demo"` and the server never reports it as attested. Closing
-this gap is the main production work item and is written up in
-[`docs/UIDAI_INTEGRATION.md`](docs/UIDAI_INTEGRATION.md).
+cryptography. The original gap was the **signature attestation**: every
+circuit's client asserted `signature_valid = 1` rather than proving anything about
+where the data came from.
+
+**All five circuits have now closed that stub.** Every one of them verifies,
+in-circuit, a real EdDSA-Poseidon signature from a named issuer key over a
+Poseidon commitment to the exact attributes that circuit's claim depends on —
+see [`circuits/src/helpers/issuerCredential.circom`](circuits/src/helpers/issuerCredential.circom),
+the reference issuer in [`scripts/issuer/issue_credential.mjs`](scripts/issuer/issue_credential.mjs),
+and the registry in [`backend/services/issuer_registry.py`](backend/services/issuer_registry.py).
+A citizen can no longer self-assert a fabricated date of birth, address, or PAN
+linkage; they must hold a genuine signature, from a registered issuer key, over
+the exact attributes being proved — tamper with one digit after the fact and the
+signature check fails (see the tampered-value tests in `circuits/test/`).
+
+**Precision matters here: these are issuer-verified proofs, not UIDAI-verified
+proofs.** The circuits check that a registered enrolment issuer (an AUA/KUA —
+a bank, telco, or Common Service Centre already authorised by UIDAI to perform
+Aadhaar e-KYC) genuinely signed the attributes; they do not verify UIDAI's own
+RSA-SHA256 signature in-circuit. That is a real, checkable gap, not a rounding
+error, and describing this system as "UIDAI-verified" would overclaim what it
+does. See [`docs/UIDAI_INTEGRATION.md`](docs/UIDAI_INTEGRATION.md) for the full
+model and [`docs/XML_SIGNATURE_SPIKE.md`](docs/XML_SIGNATURE_SPIKE.md) for an
+evidence-based estimate of what closing that further gap (in-circuit UIDAI
+verification over the offline eKYC XML) would cost.
 
 The trusted setup here is a single-party ceremony, fine for a prototype and not for
-production; see [`docs/TRUSTED_SETUP.md`](docs/TRUSTED_SETUP.md).
+production; see [`docs/TRUSTED_SETUP.md`](docs/TRUSTED_SETUP.md) and the concrete
+multi-party plan in [`docs/TRUSTED_SETUP_CEREMONY_PLAN.md`](docs/TRUSTED_SETUP_CEREMONY_PLAN.md).
 
 ---
 
@@ -145,8 +165,12 @@ production; see [`docs/TRUSTED_SETUP.md`](docs/TRUSTED_SETUP.md).
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the pieces fit, data flow, threat model
 - [`docs/CLAIMS.md`](docs/CLAIMS.md) — every claim, what it reveals, what it hides
-- [`docs/UIDAI_INTEGRATION.md`](docs/UIDAI_INTEGRATION.md) — the demo-vs-real signature gap and how to close it
+- [`docs/UIDAI_INTEGRATION.md`](docs/UIDAI_INTEGRATION.md) — the issuer-vs-UIDAI signature gap and how to close it
 - [`docs/TRUSTED_SETUP.md`](docs/TRUSTED_SETUP.md) — the ceremony and its security
+- [`docs/TRUSTED_SETUP_CEREMONY_PLAN.md`](docs/TRUSTED_SETUP_CEREMONY_PLAN.md) — the concrete multi-party ceremony plan
+- [`docs/XML_SIGNATURE_SPIKE.md`](docs/XML_SIGNATURE_SPIKE.md) — in-circuit UIDAI XML verification: what it would cost
+- [`docs/PROVING_SYSTEM_EVALUATION.md`](docs/PROVING_SYSTEM_EVALUATION.md) — Circom/Groth16 vs. Halo2/Noir, and why
+- [`docs/COMPARISON_ANON_AADHAAR.md`](docs/COMPARISON_ANON_AADHAAR.md) — where this project stands against Anon Aadhaar, honestly
 - API reference: run the backend and open **http://localhost:8000/docs**
 
 ## Licence

@@ -2,6 +2,13 @@ import * as snarkjs from "snarkjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  issueAgeCredential,
+  issueCitizenshipCredential,
+  issueLocationCredential,
+  issueCompoundCredential,
+  issuePanCredential,
+} from "../../scripts/issuer/issue_credential.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const CIRCUITS = path.resolve(HERE, "..");
@@ -18,6 +25,13 @@ export const SECRET =
 
 export const VERIFIER_ID = 99999;
 export const EXPIRY = 1783699200;
+
+// Fixed test-only issuer EdDSA key — deterministic so fixtures don't change
+// between runs. Deliberately NOT scripts/issuer/demo_issuer_key.json (that
+// file is gitignored/machine-generated); this one lives only in test memory,
+// the same way fixtures.json's proofs are generated against a real key but
+// don't need that key checked in.
+export const TEST_ISSUER_PRVKEY = Buffer.from("11".repeat(32), "hex");
 
 function paths(snake) {
   const circuit = LAYOUT[snake].circuit;
@@ -67,12 +81,60 @@ export async function expectUnprovable(snake, input) {
   );
 }
 
+/** { issuer_sig_r8x, issuer_sig_r8y, issuer_sig_s, issuer_pubkey_ax, issuer_pubkey_ay } from
+ *  an issue*Credential() result — the shape every circuit's cred.* inputs expect. */
+function credFields(cred) {
+  return {
+    issuer_sig_r8x: cred.r8x, issuer_sig_r8y: cred.r8y, issuer_sig_s: cred.s,
+    issuer_pubkey_ax: cred.pubkeyAx, issuer_pubkey_ay: cred.pubkeyAy,
+  };
+}
+
+/** Issue a genuine age_proof credential for EXACTLY the given dob, and return
+ *  the witness-ready credential fields. Tests that vary dob_year/month/day
+ *  must call this per variant — a credential is only valid for the attributes
+ *  it actually commits to. */
+export async function ageCredFields(dob_year, dob_month, dob_day, secret = SECRET) {
+  const cred = await issueAgeCredential(TEST_ISSUER_PRVKEY, { dob_year, dob_month, dob_day, secret });
+  return credFields(cred);
+}
+
+export async function citizenshipCredFields(secret = SECRET) {
+  const cred = await issueCitizenshipCredential(TEST_ISSUER_PRVKEY, { secret });
+  return credFields(cred);
+}
+
+export async function locationCredFields(state_code, district_code, pincode, secret = SECRET) {
+  const cred = await issueLocationCredential(TEST_ISSUER_PRVKEY, { state_code, district_code, pincode, secret });
+  return credFields(cred);
+}
+
+export async function compoundCredFields(dob_year, dob_month, dob_day, state_code, district_code, secret = SECRET) {
+  const cred = await issueCompoundCredential(TEST_ISSUER_PRVKEY, {
+    dob_year, dob_month, dob_day, state_code, district_code, secret,
+  });
+  return credFields(cred);
+}
+
+export async function panCredFields(pan_hash, secret = SECRET) {
+  const cred = await issuePanCredential(TEST_ISSUER_PRVKEY, { pan_hash, secret });
+  return credFields(cred);
+}
+
+/** Flip one digit of a genuine credential's signature — a stand-in for "no
+ *  genuine issuer signature exists" (what signature_valid: 0 used to mean).
+ *  The EdDSA check inside the IssuerCredentialCheck templates is a hard
+ *  assert, so this must make the witness unprovable, not just wrong. */
+export function tamperSignature(credFieldsObj) {
+  return { ...credFieldsObj, issuer_sig_s: String(BigInt(credFieldsObj.issuer_sig_s) + 1n) };
+}
+
 export const adult = {
   dob_year: 1998,
   dob_month: 7,
   dob_day: 10,
-  signature_valid: 1,
   aadhaar_secret: SECRET,
+  ...(await ageCredFields(1998, 7, 10)),
 };
 
 export const today = { current_year: 2026, current_month: 7, current_day: 14 };

@@ -34,6 +34,7 @@ from services.groth16 import (
     load_verification_key,
     verify_groth16,
 )
+from services.issuer_registry import get_issuer_registry
 
 logger = logging.getLogger("zkgate.verifier")
 
@@ -265,9 +266,40 @@ def verify_bundle(
     if not good:
         return VerificationResult(False, error=err)
 
+    trust_level = _resolve_trust_level(snake, sig, is_demo)
+
     return VerificationResult(
         valid=True,
         claims=claims,
         nullifier=sig["nullifier"],
-        trust_level="demo" if is_demo else "attested",
+        trust_level=trust_level,
     )
+
+
+def _resolve_trust_level(snake: str, sig: dict, is_demo: bool) -> str:
+    """
+    Decide what to report as trust_level.
+
+    No circuit has a client-asserted demo/real signature bit any more — see
+    docs/UIDAI_INTEGRATION.md and circuits/src/helpers/issuerCredential.circom.
+    Every proof that verifies already guarantees a genuine EdDSA signature
+    from SOME issuer key (the crypto gate above would have failed otherwise);
+    what is left to decide is whether that particular issuer key is one this
+    deployment actually trusts. That is exactly what the issuer registry is
+    for, so trust_level is derived from it uniformly across all five claim
+    types, not from a caller-supplied is_demo flag.
+
+    is_demo is kept as a parameter for API/call-site compatibility (see
+    backend/routers/verify.py) but no longer affects the decision — it is
+    meaningless now that every circuit requires a real signature to produce
+    a proof at all. What used to distinguish "demo" from "real" was whether
+    the client bothered to assert signature_valid=1 honestly; now it is
+    whether the issuer key that actually signed the credential is one this
+    deployment has chosen to register.
+    """
+    registry = get_issuer_registry()
+    ax = sig.get("issuer_pubkey_ax")
+    ay = sig.get("issuer_pubkey_ay")
+    if ax is not None and ay is not None and registry.is_trusted(ax, ay):
+        return "attested"
+    return "demo"  # a real signature, but from an unrecognised/unregistered issuer key

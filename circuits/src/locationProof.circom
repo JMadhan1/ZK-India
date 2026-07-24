@@ -2,6 +2,7 @@ pragma circom 2.1.0;
 
 include "circomlib/circuits/comparators.circom";
 include "helpers/nullifier.circom";
+include "helpers/issuerCredential.circom";
 
 /*
  * ZKGate India — Location Proof
@@ -23,14 +24,31 @@ include "helpers/nullifier.circom";
  * post office, village. Those fields exist in the Aadhaar XML and are simply
  * never fed to it. A verifier who wants to know a citizen is in Chittoor learns
  * that they are in Chittoor, and cannot learn which house.
+ *
+ * On the issuer credential (replaces the old signature_valid stub):
+ *
+ *   The stub let a client self-assert `signature_valid = 1` regardless of
+ *   what state_code/district_code/pincode it fed the circuit — a forged
+ *   location could ride along with the asserted bit and nothing would catch
+ *   it. Binding only the secret (the way ageProof does for DOB) would NOT be
+ *   enough here either: it would prove "a genuine issuer signed something for
+ *   this secret," but not that the something was THIS state/district/pincode.
+ *   So the commitment the issuer signs must include state_code, district_code
+ *   AND pincode alongside the secret — see helpers/issuerCredential.circom's
+ *   IssuerCredentialCheckN(3). Change one digit of any of the three after the
+ *   issuer signed it and the commitment (and therefore the signature check)
+ *   no longer matches, making the witness unsatisfiable. That is the specific
+ *   attack a naive secret-only binding would miss.
  */
 template LocationProof() {
     // ── Private ──
     signal input state_code;
     signal input district_code;
     signal input pincode;
-    signal input signature_valid;
     signal input aadhaar_secret;
+    signal input issuer_sig_r8x;
+    signal input issuer_sig_r8y;
+    signal input issuer_sig_s;
 
     // ── Public ──
     signal input required_state_code;     // 0 = any
@@ -39,16 +57,29 @@ template LocationProof() {
     signal input proof_level;             // 1..4
     signal input verifier_id;
     signal input expiry_timestamp;
+    signal input issuer_pubkey_ax;
+    signal input issuer_pubkey_ay;
 
     // ── Public outputs ──
     signal output is_valid;
     signal output nullifier;
     signal output proved_state_code;
 
-    // ── 1. Valid UIDAI signature. Aadhaar is only issued to Indian residents,
-    //       so a valid signature IS the country-level claim — level 1 needs
-    //       nothing further. ──
-    signature_valid === 1;
+    // ── 1. The citizen must hold a genuine issuer-signed credential over
+    //       THESE EXACT state_code/district_code/pincode values (replaces
+    //       the old signature_valid stub). Aadhaar is only issued to Indian
+    //       residents, so a valid credential IS the country-level claim —
+    //       level 1 needs nothing further. ──
+    component cred = IssuerCredentialCheckN(3);
+    cred.attrs[0]          <== state_code;
+    cred.attrs[1]          <== district_code;
+    cred.attrs[2]          <== pincode;
+    cred.aadhaar_secret    <== aadhaar_secret;
+    cred.issuer_sig_r8x    <== issuer_sig_r8x;
+    cred.issuer_sig_r8y    <== issuer_sig_r8y;
+    cred.issuer_sig_s      <== issuer_sig_s;
+    cred.issuer_pubkey_ax  <== issuer_pubkey_ax;
+    cred.issuer_pubkey_ay  <== issuer_pubkey_ay;
 
     // ── 2. Match each field, treating 0 as a wildcard ──
     component state_zero = IsZero();
@@ -135,5 +166,7 @@ component main {public [
     required_pincode,
     proof_level,
     verifier_id,
-    expiry_timestamp
+    expiry_timestamp,
+    issuer_pubkey_ax,
+    issuer_pubkey_ay
 ]} = LocationProof();

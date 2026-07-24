@@ -19,14 +19,21 @@ banner "Circuit tests (snarkjs)"
 # Serial: each file spins up snarkjs worker threads, and running the files in
 # parallel (node --test's default) multiplies memory pressure and slows every
 # proof to a crawl. --test-concurrency=1 keeps it predictable.
-node --test --test-concurrency=1 \
+#
+# --test-force-exit: snarkjs leaves its global curve's worker threads running,
+# which keeps the event loop alive after every assertion has passed, so the
+# runner would otherwise hang indefinitely at the end instead of exiting 0.
+node --test --test-force-exit --test-concurrency=1 \
   circuits/test/ageProof.test.mjs \
   circuits/test/locationProof.test.mjs \
   circuits/test/compoundProof.test.mjs \
   || fail=1
 
 banner "SDK tests (parsing, encoding parity)"
-( cd sdk && node --test test/ ) || fail=1
+# Glob the files explicitly rather than passing the bare `test/` directory:
+# Node 20 accepts the directory form, but Node 22+ tries to load it as a single
+# module and errors with MODULE_NOT_FOUND.
+( cd sdk && node --test test/*.mjs ) || fail=1
 
 banner "Backend tests (pytest, real proofs)"
 ( cd backend && CIRCUIT_KEYS_DIR="../circuits/keys" "$PY" -m pytest -q ) || fail=1
