@@ -175,6 +175,21 @@
   .stat .lbl{font-size:14px; color:var(--muted); margin-bottom:14px;}
   .stat .src{font-size:11.5px; color:var(--muted2);}
 
+  .steps{display:flex; flex-direction:column; gap:14px; margin-bottom:8px;}
+  .step{
+    display:grid; grid-template-columns:44px 1fr; gap:18px; align-items:start;
+    background:var(--panel); backdrop-filter:blur(var(--blur)); border:1px solid var(--border);
+    border-radius:16px; padding:20px 22px; box-shadow:var(--shadow-lift);
+    transition:border-color .2s, transform .2s;
+  }
+  .step:hover{border-color:var(--chakra); transform:translateX(3px);}
+  .stepnum{
+    width:40px; height:40px; border-radius:50%; background:var(--grad-warm); color:#0a0e05;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
+  }
+  .step h4{font-size:15.5px; margin-bottom:6px;}
+  .step p{font-size:13.8px; color:var(--muted); line-height:1.7;}
+  .step p b{color:var(--text);}
   .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
   @media(max-width:900px){ .grid3{grid-template-columns:1fr 1fr;} }
   @media(max-width:600px){ .grid3{grid-template-columns:1fr;} }
@@ -374,7 +389,64 @@
       cross-checked against snarkjs, and the JS/Python encoders are proven byte-identical so
       a proof built in the browser verifies on the server.
     </p>
-    <div class="grid3">
+    <div class="steps">
+      <div class="step reveal">
+        <div class="stepnum">1</div>
+        <div>
+          <h4>Get the offline eKYC XML</h4>
+          <p>The citizen downloads their own UIDAI offline eKYC XML — OTP-gated, digit-masked, with a fresh rotating reference ID each time. It never touches any server in this system.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">2</div>
+        <div>
+          <h4>Parse entirely in the browser</h4>
+          <p><code>sdk/src/aadhaar.js</code> parses the XML client-side — DOB, state, pincode, signature block — and it stays in memory on the citizen's device only.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">3</div>
+        <div>
+          <h4>Derive a secret & build the witness</h4>
+          <p>A Poseidon hash derives a private <code>aadhaar_secret</code>. The SDK assembles the private witness — DOB, state, secret, issuer-signed credential — for exactly the claim being proven.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">4</div>
+        <div>
+          <h4>Generate the proof, on-device</h4>
+          <p><code>snarkjs.groth16.fullProve</code> runs the Circom circuit locally (wasm + proving key fetched as static assets) and outputs a ~800-byte Groth16 proof plus its public signals.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">5</div>
+        <div>
+          <h4>Send only the proof</h4>
+          <p>The proof and public signals — never the XML, never the DOB, never the Aadhaar number — go to the verifier's <code>POST /v1/verify</code> endpoint.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">6</div>
+        <div>
+          <h4>Four checks on the backend</h4>
+          <p>
+            <b>Pairing check</b> — an independent Python Groth16 verifier, cross-checked against snarkjs, rejects tampered proofs and off-curve points.<br>
+            <b>Semantic gate</b> — do the public signals actually answer what the verifier asked (an age≥18 proof can't satisfy an age≥21 request)?<br>
+            <b>Nullifier registry</b> — <code>Poseidon(secret, verifier_id, expiry)</code> catches replay, first-use-wins, per <code>(claim_type, nullifier)</code>.<br>
+            <b>Audit chain</b> — every verification is written to a hash-chained log; tampering with history is detectable.
+          </p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="stepnum">7</div>
+        <div>
+          <h4>Verifier gets a verdict, nothing else</h4>
+          <p>The response is <code>{ valid, claims, nullifier, trust_level }</code> — e.g. <code>{"age_above_18": true}</code>. No name, no DOB, no address, no Aadhaar number was ever transmitted or stored.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:20px;">
       <div class="card reveal">
         <h3><span class="ic">🔒</span>Constrain, don't report</h3>
         <p>Circuits assert <code>is_valid === 1</code> rather than merely output a flag — a minor cannot generate an "age ≥ 18" proof at all. "The proof verifies" and "the claim is true" are the same statement.</p>
