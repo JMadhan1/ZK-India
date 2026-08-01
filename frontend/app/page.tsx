@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { CLAIMS, claimById } from "@/lib/claims";
 import { parse, prove, type ParsedAadhaar, type ProofResult } from "@/lib/prove";
+import { Landing } from "@/components/Landing";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 // The demo verifier "99999" (Demo Bank). A real citizen scans a verifier's
@@ -108,16 +109,13 @@ export default function Home() {
   }
 
   return (
-    <main className="container">
-      <section className="hero">
-        <h1>Prove who you are. Reveal nothing.</h1>
-        <p>
-          Upload your Aadhaar offline eKYC XML, choose what you want to prove, and
-          generate a cryptographic proof <strong>on this device</strong>. The XML
-          never leaves your browser — only the proof does.
-        </p>
-      </section>
-
+    <>
+      <Landing onTryDemo={() => document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" })} />
+      <main className="container" id="demo">
+      <div className="demo-title">
+        <h2>Try it yourself</h2>
+        <p className="sub">Every step below runs live, against the real circuits.</p>
+      </div>
       {/* STEP 1 — XML */}
       <div className="card">
         <h2>
@@ -295,7 +293,8 @@ export default function Home() {
           <p style={{ marginBottom: 0, fontSize: 14 }}>{error}</p>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

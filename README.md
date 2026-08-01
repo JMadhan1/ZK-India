@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🕉️ ZKGate India
+# 🕉️ ZKGate
 
-### India's first indigenous Zero-Knowledge Identity Layer
+### The indigenous Zero-Knowledge Identity Layer
 
 **Prove a fact about yourself. Not your identity.**
 
@@ -229,7 +229,7 @@ gap this project targets.
 | Google Wallet Aadhaar VC | ✅ Yes | 🔶 Selective disclosure (ISO 18013-5 mdoc) |
 | Anon Aadhaar (Ethereum Foundation) | ⏳ Pre-production | ✅ True ZK (QR-based) |
 | Self Protocol (self.xyz) | ✅ Yes, funded | ✅ True ZK |
-| **ZKGate India** | 🧪 Prototype | ✅ **True ZK — offline eKYC XML channel** |
+| **ZKGate** | 🧪 Prototype | ✅ **True ZK — offline eKYC XML channel** |
 
 Full, sourced comparison: [`docs/COMPARISON_ANON_AADHAAR.md`](docs/COMPARISON_ANON_AADHAAR.md).
 

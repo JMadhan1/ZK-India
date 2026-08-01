@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "zkgate-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "zkgate-verifier-portal",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "verifier-portal", "run", "dev"],
+      "port": 3001,
+      "autoPort": true
+    },
+    {
+      "name": "zkgate-backend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--reload", "--port", "8000"],
+      "cwd": "backend",
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

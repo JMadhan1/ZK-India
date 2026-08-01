@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ZKGate India — Verifier Portal",
+  title: "ZKGate — Verifier Portal",
   description: "Request and verify zero-knowledge identity proofs from citizens.",
 };
 
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="topbar">
           <div className="container">
             <span className="brand">
-              ZK<span className="chakra">Gate</span> India
+              ZK<span className="chakra">Gate</span>
             </span>
             <span className="tag">Verifier Portal · for banks & institutions</span>
           </div>
