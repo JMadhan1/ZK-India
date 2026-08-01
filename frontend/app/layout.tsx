@@ -50,8 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
 
         <footer className="site-footer">
-          <div className="wrap">
-            <div className="fmuted">Your Aadhaar XML never leaves this device. Only a mathematical proof is shared. · zkgate.net</div>
+          <div className="wrap footer-row">
+            <span className="brand footer-brand">ZK<span className="chakra">Gate</span></span>
+            <div className="fmuted">
+              Sovereign technology for India · 2026 prototype · built toward GIGW accessibility
+              guidelines (not yet audited) · Your Aadhaar XML never leaves this device.
+            </div>
           </div>
         </footer>
       </body>

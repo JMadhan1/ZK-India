@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { Typewriter } from "@/components/Typewriter";
+
+const REAL_WORLD_SCENES = [
+  { k: "SIM shop", v: "Verified: Age 18+", icon: "📱" },
+  { k: "Bank counter", v: "KYC Verified ✓", icon: "🏦" },
+  { k: "Bar", v: "Age 21+ Verified", icon: "🌙" },
+  { k: "Online", v: "Prove you are 18+ → Done", icon: "💻" },
+];
 
 const PROBLEM_TABS = [
   {
@@ -47,24 +55,40 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
       <ScrollReveal />
 
       <header className="hero">
-        <div className="wrap">
-          <div className="badge">🇮🇳 Built for Sovereign Technology for India</div>
-          <h1>
-            Prove a fact about
-            <br />
-            yourself. <span className="grad">Not your identity.</span>
-          </h1>
-          <p className="hero-sub">
-            ZKGate is the indigenous zero-knowledge identity layer. Prove you're over 18,
-            a resident of your state, or a valid Aadhaar holder — using a ~800-byte
-            cryptographic proof that reveals nothing else. No name. No date of birth.
-            No address. No Aadhaar number ever leaves your device.
-          </p>
-          <div className="hero-cta">
-            <button className="btn primary" onClick={onTryDemo}>Try the demo ↓</button>
-            <a className="btn ghost" href="#watch">Watch how it works in the real world</a>
+        <div className="wrap hero-grid">
+          <div className="hero-copy">
+            <div className="badge">🇮🇳 Built for Sovereign Technology for India</div>
+            <h1>
+              <Typewriter lines={["Prove who you are.", "Reveal nothing."]} />
+            </h1>
+            <p className="hero-sub">
+              ZKGate is India's sovereign zero-knowledge identity layer. Prove age,
+              residency, or a valid Aadhaar with an ~800-byte cryptographic proof.
+              Zero personal data ever leaves your device.
+            </p>
+            <div className="hero-cta">
+              <button className="btn primary" onClick={onTryDemo}>Try live demo →</button>
+              <a className="btn ghost" href="#watch">Watch 30-sec walkthrough</a>
+            </div>
+            <div className="trust-line">
+              Prototype · Offline eKYC XML · Groth16 · Built for India 🇮🇳
+            </div>
           </div>
 
+          <div className="hero-mockup" aria-hidden="true">
+            <div className="phone-mockup">
+              <div className="phone-notch" />
+              <div className="phone-glow" />
+              <div className="phone-screen">
+                <div className="phone-brand">ZK<span>Gate</span></div>
+                <div className="phone-check">✓</div>
+                <div className="phone-check-label">Age 18+ Verified</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="wrap">
           <div className="flow">
             <div className="flow-step">
               <div className="k">Citizen's device</div>
@@ -139,6 +163,16 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
                 what it never shows.
               </div>
             </div>
+          </div>
+
+          <div className="scene-grid">
+            {REAL_WORLD_SCENES.map((s) => (
+              <div key={s.k} className="scene-card reveal">
+                <div className="scene-icon">{s.icon}</div>
+                <div className="scene-k">{s.k}</div>
+                <div className="scene-check">✓ {s.v}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -216,7 +250,7 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
                 <tr><td>Google Wallet Aadhaar VC</td><td><span className="yes">Yes</span></td><td><span className="mid">Selective disclosure</span> (ISO 18013-5 mdoc)</td></tr>
                 <tr><td>Anon Aadhaar (Ethereum Foundation)</td><td><span className="no">Pre-production</span></td><td><span className="yes">True ZK</span> (QR-based)</td></tr>
                 <tr><td>Self Protocol (self.xyz)</td><td><span className="yes">Yes</span>, funded</td><td><span className="yes">True ZK</span></td></tr>
-                <tr><td className="you">ZKGate</td><td>Prototype</td><td className="you">True ZK — offline eKYC XML channel</td></tr>
+                <tr className="you-row"><td className="you">ZKGate</td><td>Prototype</td><td className="you">True ZK — offline eKYC XML channel</td></tr>
               </tbody>
             </table>
           </div>

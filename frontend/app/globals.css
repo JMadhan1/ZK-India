@@ -130,6 +130,13 @@ nav.topbar .wrap { display: flex; align-items: center; justify-content: space-be
 /* ── hero ────────────────────────────────────────────────────────────── */
 header.hero { padding: 100px 0 70px; text-align: center; position: relative; overflow: hidden; }
 
+.hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; text-align: left; }
+.hero-copy { position: relative; z-index: 2; }
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; text-align: center; }
+  .hero-mockup { order: -1; }
+}
+
 .badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(var(--blur));
@@ -137,11 +144,39 @@ header.hero { padding: 100px 0 70px; text-align: center; position: relative; ove
   margin-bottom: 30px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; position: relative; z-index: 2;
 }
 h1 {
-  font-size: clamp(40px,8vw,86px); font-weight: 700; letter-spacing: -0.01em; line-height: 0.98;
-  margin: 0 0 24px; position: relative; z-index: 2; text-transform: uppercase;
+  font-size: clamp(40px,6vw,72px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.02;
+  margin: 0 0 24px; position: relative; z-index: 2; text-transform: uppercase; min-height: 2.1em;
 }
 h1 .grad { background: var(--grad-tri); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.hero-sub { max-width: 640px; margin: 0 auto 38px; color: var(--muted); font-size: 17.5px; position: relative; z-index: 2; }
+.typewriter-cursor { animation: blink 0.9s step-end infinite; color: var(--saffron); }
+@keyframes blink { 50% { opacity: 0; } }
+.hero-sub { max-width: 520px; margin: 0 0 30px; color: var(--muted); font-size: 17px; position: relative; z-index: 2; }
+.trust-line { font-size: 12.5px; color: var(--muted2); margin-top: 22px; letter-spacing: .01em; position: relative; z-index: 2; }
+
+/* ── hero phone mockup ───────────────────────────────────────────────── */
+.hero-mockup { display: flex; justify-content: center; position: relative; z-index: 2; }
+.phone-mockup {
+  position: relative; width: 240px; height: 490px; border-radius: 36px;
+  background: linear-gradient(160deg, #1a2038, #0c1020);
+  border: 3px solid #2a3252; box-shadow: 0 30px 70px -20px rgba(0,0,0,0.5);
+  animation: floaty 4s ease-in-out infinite; padding: 14px;
+}
+@keyframes floaty { 0%,100% { transform: translateY(-8px); } 50% { transform: translateY(8px); } }
+.phone-notch { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: 70px; height: 16px; border-radius: 999px; background: #0c1020; z-index: 3; }
+.phone-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 160px; height: 160px; background: var(--green); filter: blur(50px); opacity: .4; border-radius: 50%; z-index: 0; }
+.phone-screen {
+  position: relative; z-index: 2; height: 100%; border-radius: 24px; background: #0a0e1c;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  border: 1px solid #232b48;
+}
+.phone-brand { font-family: var(--font-display), sans-serif; font-weight: 700; font-size: 18px; color: #fff; letter-spacing: .02em; }
+.phone-brand span { color: var(--saffron); }
+.phone-check {
+  width: 88px; height: 88px; border-radius: 50%; background: var(--green);
+  color: #fff; font-size: 44px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 40px 6px rgba(34,197,94,0.45);
+}
+.phone-check-label { color: #d7e0f5; font-size: 14px; font-weight: 600; }
 .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; position: relative; z-index: 2; }
 
 .flow {
@@ -239,6 +274,9 @@ table.zk-table tbody tr:last-child td { border-bottom: none; }
 table.zk-table tbody tr { transition: background .15s; }
 table.zk-table tbody tr:hover { background: rgba(255,153,51,0.05); }
 td.you { color: var(--saffron); font-weight: 700; }
+tr.you-row { border-left: 3px solid var(--green); }
+tr.you-row td:first-child { position: relative; }
+tr.you-row td:first-child::before { content: ""; position: absolute; left: -3px; top: 0; bottom: 0; width: 3px; background: var(--green); }
 .yes { color: var(--green); font-weight: 700; }
 .no { color: var(--bad); font-weight: 700; }
 .mid { color: var(--chakra); font-weight: 700; }
@@ -286,12 +324,25 @@ td.you { color: var(--saffron); font-weight: 700; }
 .video-placeholder .cap { color: var(--muted); font-size: 13.5px; max-width: 420px; }
 .video-placeholder .cap b { color: var(--text); }
 
+.scene-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; max-width: 900px; margin: 24px auto 0; }
+@media (max-width: 720px) { .scene-grid { grid-template-columns: 1fr 1fr; } }
+.scene-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 14px; text-align: center; transition: transform .2s, border-color .2s;
+}
+.scene-card:hover { transform: translateY(-4px); border-color: var(--green); }
+.scene-icon { font-size: 26px; margin-bottom: 8px; }
+.scene-k { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; }
+.scene-check { color: var(--green); font-size: 12px; font-weight: 600; }
+
 .disclaimer { max-width: 840px; margin: 56px auto 0; padding: 18px 22px; border-radius: 14px; background: rgba(251,113,133,0.07); border: 1px solid rgba(251,113,133,0.25); font-size: 12.5px; color: var(--muted); backdrop-filter: blur(var(--blur)); }
 .disclaimer b { color: var(--bad); }
 
 footer.site-footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 0; position: relative; z-index: 1; }
-footer.site-footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-.fmuted { color: var(--muted2); font-size: 12.5px; }
+.footer-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-brand { font-size: 15px; }
+.fmuted { color: var(--muted2); font-size: 12.5px; max-width: 560px; text-align: right; }
+@media (max-width: 640px) { .fmuted { text-align: left; } }
 
 /* ── demo flow (the live functional card stack) ─────────────────────── */
 .demo-title { padding: 70px 0 6px; text-align: center; position: relative; z-index: 1; }
