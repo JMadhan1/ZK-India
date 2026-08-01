@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: zkgate-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: ENVIRONMENT
+        value: production
+    # No REDIS_URL / DATABASE_URL set: both are optional (see
+    # backend/dependencies.py and backend/requirements.txt) — the nullifier
+    # registry falls back to in-memory, which is fine for a demo deployment.
+    # Add a Render Key Value (Redis-compatible) instance and set REDIS_URL
+    # here if replay-guard state needs to survive a restart/redeploy.

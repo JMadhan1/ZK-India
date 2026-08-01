@@ -3,13 +3,17 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # py_ecc is pure Python, so no build toolchain is needed — keep the image slim.
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ .
 
-# Circuit verification keys are mounted at /app/circuits/keys by docker-compose
-# (read-only). CIRCUIT_KEYS_DIR points the verifier at them.
+# Only the small, git-tracked verification keys + signal_layout.json are
+# needed here — the backend verifies proofs, it never generates them, so the
+# large gitignored proving keys (*.zkey, *.ptau) that circuits/keys also
+# holds locally are irrelevant to this image and never copied in.
+COPY circuits/keys/*_verification_key.json circuits/keys/signal_layout.json circuits/keys/
+
 ENV CIRCUIT_KEYS_DIR=/app/circuits/keys \
     PYTHONUNBUFFERED=1
 
