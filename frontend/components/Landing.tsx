@@ -152,17 +152,12 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
             the same one-word answer, every time. No document ever changes hands.
           </p>
           <div className="video-frame reveal">
-            {/* Swap this placeholder for a real <video src="..." controls /> or
-                <iframe> once the walkthrough video is ready. */}
-            <div className="video-placeholder">
-              <div className="play">▶</div>
-              <div className="cap">
-                <b>Demo video coming soon.</b><br />
-                A walkthrough of ZKGate used at a SIM shop, a bar, a bank KYC counter, and an
-                online age gate — showing exactly what the other person's screen shows, and
-                what it never shows.
-              </div>
-            </div>
+            <iframe
+              src="https://www.youtube.com/embed/oxVnIlDK9AM"
+              title="ZKGate — how verification works in the real world"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
 
           <div className="scene-grid">

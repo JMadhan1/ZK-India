@@ -82,6 +82,7 @@ nav.topbar {
 }
 nav.topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: .01em; text-transform: uppercase; }
+.brand-logo { border-radius: 50%; flex-shrink: 0; }
 .brand .chakra { color: var(--saffron); }
 .navlinks { display: flex; gap: 26px; font-size: 14px; color: var(--muted); }
 .navlinks a { text-decoration: none; transition: color .15s; position: relative; }

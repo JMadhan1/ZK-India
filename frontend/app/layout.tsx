@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Chakra_Petch, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
   title: "ZKGate — Prove who you are, reveal nothing",
   description:
     "The indigenous Zero-Knowledge Identity Layer. Prove your age, residency, or citizenship without disclosing any personal data.",
+  icons: { icon: "/logo.jpg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="topbar">
           <div className="wrap">
             <span className="brand">
+              <Image src="/logo.jpg" alt="" width={30} height={30} className="brand-logo" priority />
               ZK<span className="chakra">Gate</span>
             </span>
             <div className="navlinks">
