@@ -43,11 +43,19 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0; padding: 0;
   background: var(--bg); color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6; overflow-x: hidden; position: relative;
 }
 a { color: inherit; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--panel2); padding: 2px 6px; border-radius: 5px; font-size: .92em; }
+
+/* Headlines get their own bold, condensed, technical typeface — distinct
+   from body copy on purpose, so the two never get mistaken for one system
+   font doing every job. */
+h1, h2, h3, h4, .brand, .btn, .stepnum, .stat .num, .pill-tab, .badge,
+.demo-title h2, .card h2, .cta-band h2 {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+}
 
 .wrap, .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
 
@@ -74,7 +82,7 @@ nav.topbar {
   border-bottom: 1px solid var(--border);
 }
 nav.topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: .01em; text-transform: uppercase; }
 .brand .chakra { color: var(--saffron); }
 .navlinks { display: flex; gap: 26px; font-size: 14px; color: var(--muted); }
 .navlinks a { text-decoration: none; transition: color .15s; position: relative; }
@@ -98,7 +106,8 @@ nav.topbar .wrap { display: flex; align-items: center; justify-content: space-be
 /* ── buttons ─────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 20px; border-radius: 11px; font-size: 14px; font-weight: 600;
+  padding: 13px 26px; border-radius: 999px; font-size: 14.5px; font-weight: 600;
+  letter-spacing: .01em;
   text-decoration: none; border: 1px solid transparent; cursor: pointer;
   transition: transform .15s, box-shadow .15s, opacity .15s;
   position: relative; overflow: hidden; isolation: isolate;
@@ -127,10 +136,13 @@ header.hero { padding: 100px 0 70px; text-align: center; position: relative; ove
 .badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(var(--blur));
-  padding: 7px 16px; border-radius: 999px; font-size: 12.5px; color: var(--saffron-soft);
-  margin-bottom: 30px; font-weight: 600; letter-spacing: .02em; position: relative; z-index: 2;
+  padding: 8px 18px; border-radius: 999px; font-size: 12.5px; color: var(--saffron-soft);
+  margin-bottom: 30px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; position: relative; z-index: 2;
 }
-h1 { font-size: clamp(34px,6vw,60px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; margin: 0 0 22px; position: relative; z-index: 2; }
+h1 {
+  font-size: clamp(40px,8vw,86px); font-weight: 700; letter-spacing: -0.01em; line-height: 0.98;
+  margin: 0 0 24px; position: relative; z-index: 2; text-transform: uppercase;
+}
 h1 .grad { background: var(--grad-tri); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero-sub { max-width: 640px; margin: 0 auto 38px; color: var(--muted); font-size: 17.5px; position: relative; z-index: 2; }
 .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; position: relative; z-index: 2; }
@@ -151,8 +163,45 @@ h1 .grad { background: var(--grad-tri); -webkit-background-clip: text; backgroun
 /* ── sections ────────────────────────────────────────────────────────── */
 section.lp-sec { padding: 88px 0; position: relative; z-index: 1; }
 .eyebrow { color: var(--saffron); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 14px; }
-h2.sec-h { font-size: clamp(25px,4vw,36px); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 14px; }
+h2.sec-h { font-size: clamp(30px,5vw,52px); font-weight: 700; letter-spacing: -0.005em; line-height: 1.02; margin: 0 0 16px; text-transform: uppercase; }
 .lede { color: var(--muted); font-size: 15.5px; max-width: 640px; margin: 0 0 48px; }
+
+/* Light tricolor-tinted "wash" section — an alternate to the glass-panel
+   sections, used to break up the rhythm with a warmer, brighter block
+   (echoes the India tricolor without being a literal flag repeat). */
+.lp-sec-wash {
+  background: linear-gradient(180deg, rgba(255,153,51,0.07), rgba(34,197,94,0.05) 60%, transparent);
+  border-radius: 0;
+}
+:root[data-theme="light"] .lp-sec-wash,
+:root:not([data-theme="dark"]) .lp-sec-wash {
+  background: linear-gradient(180deg, rgba(255,153,51,0.10), rgba(34,197,94,0.07) 60%, transparent);
+}
+
+/* ── pill tabs (interactive filter row, e.g. the problem-section stats) ── */
+.pill-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; position: relative; z-index: 2; }
+.pill-tab {
+  appearance: none; cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--panel-solid); color: var(--muted);
+  padding: 11px 22px; border-radius: 999px; font-size: 13.5px; font-weight: 600;
+  letter-spacing: .01em; transition: all .18s;
+}
+.pill-tab:hover { border-color: var(--chakra); color: var(--text); }
+.pill-tab.active { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
+
+/* ── numbered feature blocks (bold "01 / headline" pattern) ──────────── */
+.numblock { padding: 40px 0; border-top: 1px solid var(--border); }
+.numblock:first-of-type { border-top: none; }
+.numblock .n {
+  font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700;
+  color: var(--saffron); letter-spacing: .1em; margin-bottom: 10px;
+}
+.numblock h3 {
+  font-size: clamp(22px,3.4vw,34px); font-weight: 700; text-transform: uppercase;
+  letter-spacing: -0.005em; line-height: 1.05; margin: 0 0 12px; max-width: 720px;
+}
+.numblock p { color: var(--muted); font-size: 14.5px; line-height: 1.75; margin: 0; max-width: 640px; }
+.numblock p b { color: var(--text); }
 
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
 .reveal.in { opacity: 1; transform: translateY(0); }
@@ -218,6 +267,28 @@ td.you { color: var(--saffron); font-weight: 700; }
 .cta-band h2 { margin-bottom: 12px; }
 .cta-band p { color: var(--muted); max-width: 520px; margin: 0 auto 28px; }
 
+/* ── demo video section ─────────────────────────────────────────────── */
+.video-frame {
+  position: relative; max-width: 900px; margin: 0 auto; border-radius: 22px;
+  overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow-lift);
+  aspect-ratio: 16 / 9; background: var(--panel-solid);
+}
+.video-frame video, .video-frame iframe { width: 100%; height: 100%; display: block; border: 0; object-fit: cover; }
+.video-placeholder {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 16px; text-align: center; padding: 24px;
+  background: radial-gradient(circle at 30% 20%, rgba(255,153,51,0.14), transparent 55%),
+              radial-gradient(circle at 75% 80%, rgba(34,197,94,0.12), transparent 50%),
+              var(--panel-solid);
+}
+.video-placeholder .play {
+  width: 76px; height: 76px; border-radius: 50%; background: var(--grad-warm);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; color: #0a0e05;
+  box-shadow: 0 12px 32px -10px rgba(255,153,51,.6);
+}
+.video-placeholder .cap { color: var(--muted); font-size: 13.5px; max-width: 420px; }
+.video-placeholder .cap b { color: var(--text); }
+
 .disclaimer { max-width: 840px; margin: 56px auto 0; padding: 18px 22px; border-radius: 14px; background: rgba(251,113,133,0.07); border: 1px solid rgba(251,113,133,0.25); font-size: 12.5px; color: var(--muted); backdrop-filter: blur(var(--blur)); }
 .disclaimer b { color: var(--bad); }
 
@@ -227,7 +298,7 @@ footer.site-footer .wrap { display: flex; justify-content: space-between; align-
 
 /* ── demo flow (the live functional card stack) ─────────────────────── */
 .demo-title { padding: 70px 0 6px; text-align: center; position: relative; z-index: 1; }
-.demo-title h2 { font-size: 24px; margin: 0 0 6px; }
+.demo-title h2 { font-size: clamp(24px,3.4vw,34px); font-weight: 700; text-transform: uppercase; margin: 0 0 8px; }
 .demo-title .sub { margin: 0; color: var(--muted); }
 
 .card {

@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
+import { Chakra_Petch, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
+
+// Chakra Petch — bold, condensed, technical: doubles as a nod to the
+// Prabhat/Chakra theme names and gives headlines a distinct identity from
+// body text, rather than one system font doing both jobs.
+const chakraPetch = Chakra_Petch({
+  subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display",
+});
+const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
 
 export const metadata: Metadata = {
   title: "ZKGate — Prove who you are, reveal nothing",
@@ -11,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${chakraPetch.variable} ${inter.variable}`}>
         <svg className="grain" xmlns="http://www.w3.org/2000/svg">
           <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves={2} stitchTiles="stitch" /></filter>
           <rect width="100%" height="100%" filter="url(#n)" />

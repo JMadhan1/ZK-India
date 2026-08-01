@@ -1,8 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
+const PROBLEM_TABS = [
+  {
+    id: "fraud", label: "Digital Arrest Scams",
+    numDisplay: "₹22,495 Cr",
+    lbl: "Lost to cyber fraud in India in 2025, much of it built on \"digital arrest\" scams that rely on citizens believing sharing Aadhaar/PAN is a normal verification step.",
+    src: "Source: 2025 cyber-fraud reporting, PIB alerts",
+  },
+  {
+    id: "leaks", label: "KYC Data Leaks",
+    numDisplay: "7.9M+",
+    lbl: "KYC records (Aadhaar, PAN, documents) leaked from a single compromised fintech vendor in January 2025 — a systemic risk of aggregating full documents.",
+    src: "Source: dark-web breach reporting, Jan 2025",
+  },
+  {
+    id: "dpdp", label: "DPDP Deadline",
+    numDisplay: "13 May 2027",
+    lbl: "DPDP Act deadline by which every gaming, social, and e-commerce platform in India must implement verifiable age/parental-consent checks — without creating a new data liability.",
+    src: "Source: DPDP Rules, notified Nov 2025",
+  },
+];
+
+const HOW_STEPS = [
+  { n: "01", h: "Get the offline eKYC XML", b: <>The citizen downloads their own UIDAI offline eKYC XML — OTP-gated, digit-masked, with a fresh rotating reference ID each time. It never touches any server in this system.</> },
+  { n: "02", h: "Parse entirely in the browser", b: <><code>sdk/src/aadhaar.js</code> parses the XML client-side — DOB, state, pincode, signature block — and it stays in memory on the citizen's device only.</> },
+  { n: "03", h: "Derive a secret & build the witness", b: <>A Poseidon hash derives a private <code>aadhaar_secret</code>. The SDK assembles the private witness — DOB, state, secret, issuer-signed credential — for exactly the claim being proven.</> },
+  { n: "04", h: "Generate the proof, on-device", b: <><code>snarkjs.groth16.fullProve</code> runs the Circom circuit locally (wasm + proving key fetched as static assets) and outputs a ~800-byte Groth16 proof plus its public signals.</> },
+  { n: "05", h: "Send only the proof", b: <>The proof and public signals — never the XML, never the DOB, never the Aadhaar number — go to the verifier's <code>POST /v1/verify</code> endpoint.</> },
+  { n: "06", h: "Four checks on the backend", b: <>
+      <b>Pairing check</b> — an independent Python Groth16 verifier, cross-checked against snarkjs, rejects tampered proofs and off-curve points.<br />
+      <b>Semantic gate</b> — do the public signals actually answer what the verifier asked (an age≥18 proof can't satisfy an age≥21 request)?<br />
+      <b>Nullifier registry</b> — <code>Poseidon(secret, verifier_id, expiry)</code> catches replay, first-use-wins, per <code>(claim_type, nullifier)</code>.<br />
+      <b>Audit chain</b> — every verification is written to a hash-chained log; tampering with history is detectable.
+    </> },
+  { n: "07", h: "Verifier gets a verdict, nothing else", b: <>The response is <code>{"{ valid, claims, nullifier, trust_level }"}</code> — e.g. <code>{'{"age_above_18": true}'}</code>. No name, no DOB, no address, no Aadhaar number was ever transmitted or stored.</> },
+];
+
 export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
+  const [activeProblem, setActiveProblem] = useState(0);
+
   return (
     <>
       <ScrollReveal />
@@ -33,7 +72,7 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
           </p>
           <div className="hero-cta">
             <button className="btn primary" onClick={onTryDemo}>Try the demo ↓</button>
-            <a className="btn ghost" href="#how">See how it works</a>
+            <a className="btn ghost" href="#watch">Watch how it works in the real world</a>
           </div>
 
           <div className="flow">
@@ -55,35 +94,66 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
         </div>
       </header>
 
-      <section className="lp-sec" id="problem">
+      <section className="lp-sec lp-sec-wash" id="problem">
         <div className="wrap">
           <div className="eyebrow reveal">Why this exists</div>
           <h2 className="sec-h reveal">India's identity ecosystem runs on over-disclosure</h2>
           <p className="lede reveal">
             Proving one fact about yourself in India usually means handing over your entire
-            identity. That design choice has a real, current cost.
+            identity. That design choice has a real, current cost — pick a problem to see it.
           </p>
-          <div className="stats">
-            <div className="stat reveal">
-              <div className="num" data-count="22495" data-prefix="₹" data-suffix=" Cr">₹0 Cr</div>
-              <div className="lbl">Lost to cyber fraud in India in 2025, much of it built on "digital arrest" scams that rely on citizens believing sharing Aadhaar/PAN is a normal verification step.</div>
-              <div className="src">Source: 2025 cyber-fraud reporting, PIB alerts</div>
-            </div>
-            <div className="stat reveal">
-              <div className="num" data-count="7.9" data-suffix="M+">0M+</div>
-              <div className="lbl">KYC records (Aadhaar, PAN, documents) leaked from a single compromised fintech vendor in January 2025 — a systemic risk of aggregating full documents.</div>
-              <div className="src">Source: dark-web breach reporting, Jan 2025</div>
-            </div>
-            <div className="stat reveal">
-              <div className="num">13 May 2027</div>
-              <div className="lbl">DPDP Act deadline by which every gaming, social, and e-commerce platform in India must implement verifiable age/parental-consent checks — without creating a new data liability.</div>
-              <div className="src">Source: DPDP Rules, notified Nov 2025</div>
+
+          <div className="pill-tabs reveal">
+            {PROBLEM_TABS.map((t, i) => (
+              <button
+                key={t.id}
+                className={`pill-tab${activeProblem === i ? " active" : ""}`}
+                onClick={() => setActiveProblem(i)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="stat reveal" style={{ maxWidth: 640 }}>
+            {/* Plain text, not the count-up .num[data-count] treatment: that
+                animation only scans the DOM once on mount (see
+                ScrollReveal.tsx), so it can't re-trigger when a tab swaps in
+                a new number after the fact — showing the frozen placeholder
+                instead of the real value. The other stat cards, which never
+                change after mount, still use the animated version. */}
+            <div className="num">{PROBLEM_TABS[activeProblem].numDisplay}</div>
+            <div className="lbl">{PROBLEM_TABS[activeProblem].lbl}</div>
+            <div className="src">{PROBLEM_TABS[activeProblem].src}</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-sec" id="watch">
+        <div className="wrap">
+          <div className="eyebrow reveal">See it in the real world</div>
+          <h2 className="sec-h reveal">What verification actually looks like</h2>
+          <p className="lede reveal">
+            A SIM shop, a bar, a bank counter, an online age gate — the same phone screen,
+            the same one-word answer, every time. No document ever changes hands.
+          </p>
+          <div className="video-frame reveal">
+            {/* Swap this placeholder for a real <video src="..." controls /> or
+                <iframe> once the walkthrough video is ready. */}
+            <div className="video-placeholder">
+              <div className="play">▶</div>
+              <div className="cap">
+                <b>Demo video coming soon.</b><br />
+                A walkthrough of ZKGate used at a SIM shop, a bar, a bank KYC counter, and an
+                online age gate — showing exactly what the other person's screen shows, and
+                what it never shows.
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="lp-sec" id="how">
+      <section className="lp-sec lp-sec-wash" id="how">
         <div className="wrap">
           <div className="eyebrow reveal">How it works</div>
           <h2 className="sec-h reveal">Real cryptography, not a mock</h2>
@@ -92,46 +162,17 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
             cross-checked against snarkjs, and the JS/Python encoders are proven byte-identical so
             a proof built in the browser verifies on the server.
           </p>
-          <div className="steps">
-            <div className="step reveal">
-              <div className="stepnum">1</div>
-              <div><h4>Get the offline eKYC XML</h4><p>The citizen downloads their own UIDAI offline eKYC XML — OTP-gated, digit-masked, with a fresh rotating reference ID each time. It never touches any server in this system.</p></div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">2</div>
-              <div><h4>Parse entirely in the browser</h4><p><code>sdk/src/aadhaar.js</code> parses the XML client-side — DOB, state, pincode, signature block — and it stays in memory on the citizen's device only.</p></div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">3</div>
-              <div><h4>Derive a secret &amp; build the witness</h4><p>A Poseidon hash derives a private <code>aadhaar_secret</code>. The SDK assembles the private witness — DOB, state, secret, issuer-signed credential — for exactly the claim being proven.</p></div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">4</div>
-              <div><h4>Generate the proof, on-device</h4><p><code>snarkjs.groth16.fullProve</code> runs the Circom circuit locally (wasm + proving key fetched as static assets) and outputs a ~800-byte Groth16 proof plus its public signals.</p></div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">5</div>
-              <div><h4>Send only the proof</h4><p>The proof and public signals — never the XML, never the DOB, never the Aadhaar number — go to the verifier's <code>POST /v1/verify</code> endpoint.</p></div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">6</div>
-              <div>
-                <h4>Four checks on the backend</h4>
-                <p>
-                  <b>Pairing check</b> — an independent Python Groth16 verifier, cross-checked against snarkjs, rejects tampered proofs and off-curve points.<br />
-                  <b>Semantic gate</b> — do the public signals actually answer what the verifier asked (an age≥18 proof can't satisfy an age≥21 request)?<br />
-                  <b>Nullifier registry</b> — <code>Poseidon(secret, verifier_id, expiry)</code> catches replay, first-use-wins, per <code>(claim_type, nullifier)</code>.<br />
-                  <b>Audit chain</b> — every verification is written to a hash-chained log; tampering with history is detectable.
-                </p>
+          <div>
+            {HOW_STEPS.map((s) => (
+              <div key={s.n} className="numblock reveal">
+                <div className="n">{s.n}</div>
+                <h3>{s.h}</h3>
+                <p>{s.b}</p>
               </div>
-            </div>
-            <div className="step reveal">
-              <div className="stepnum">7</div>
-              <div><h4>Verifier gets a verdict, nothing else</h4><p>The response is <code>{"{ valid, claims, nullifier, trust_level }"}</code> — e.g. <code>{'{"age_above_18": true}'}</code>. No name, no DOB, no address, no Aadhaar number was ever transmitted or stored.</p></div>
-            </div>
+            ))}
           </div>
 
-          <div className="grid3" style={{ marginTop: 20 }}>
+          <div className="grid3" style={{ marginTop: 40 }}>
             <div className="glass-card reveal">
               <h3><span className="ic">🔒</span>Constrain, don't report</h3>
               <p>Circuits assert <code>is_valid === 1</code> rather than merely output a flag — a minor cannot generate an "age ≥ 18" proof at all. "The proof verifies" and "the claim is true" are the same statement.</p>
@@ -168,7 +209,7 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
         </div>
       </section>
 
-      <section className="lp-sec" id="compare">
+      <section className="lp-sec lp-sec-wash" id="compare">
         <div className="wrap">
           <div className="eyebrow reveal">Where this stands</div>
           <h2 className="sec-h reveal">Selective disclosure vs. true zero-knowledge</h2>
