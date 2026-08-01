@@ -70,7 +70,6 @@ h1, h2, h3, h4, .brand, .btn, .stepnum, .stat .num, .pill-tab, .badge,
 @keyframes float1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(60px,80px); } }
 @keyframes float2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-70px,50px); } }
 @keyframes float3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(50px,-60px); } }
-@keyframes spin { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(360deg); } }
 
 .tri-hairline { height: 3px; width: 100%; background: var(--grad-tri); position: sticky; top: 0; z-index: 60; }
 
@@ -130,8 +129,6 @@ nav.topbar .wrap { display: flex; align-items: center; justify-content: space-be
 
 /* ── hero ────────────────────────────────────────────────────────────── */
 header.hero { padding: 100px 0 70px; text-align: center; position: relative; overflow: hidden; }
-.chakra-bg { position: absolute; top: -120px; left: 50%; transform: translateX(-50%); width: 900px; height: 900px; z-index: 0; opacity: .12; pointer-events: none; animation: spin 150s linear infinite; }
-@media (max-width: 720px) { .chakra-bg { width: 560px; height: 560px; top: -40px; } }
 
 .badge {
   display: inline-flex; align-items: center; gap: 8px;

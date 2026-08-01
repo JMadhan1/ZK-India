@@ -47,16 +47,6 @@ export function Landing({ onTryDemo }: { onTryDemo: () => void }) {
       <ScrollReveal />
 
       <header className="hero">
-        <svg className="chakra-bg" viewBox="0 0 200 200" aria-hidden="true">
-          <circle cx="100" cy="100" r="95" fill="none" stroke="#5b8bf0" strokeWidth="1.2" />
-          <circle cx="100" cy="100" r="10" fill="#5b8bf0" />
-          <g stroke="#5b8bf0" strokeWidth="1.6">
-            {Array.from({ length: 24 }, (_, i) => i * 15).map((deg) => (
-              <line key={deg} x1="100" y1="70" x2="100" y2="8" transform={`rotate(${deg} 100 100)`} />
-            ))}
-          </g>
-        </svg>
-
         <div className="wrap">
           <div className="badge">🇮🇳 Built for Sovereign Technology for India</div>
           <h1>
