@@ -13,7 +13,7 @@
 [![Backend Tests](https://img.shields.io/badge/backend%20tests-30%2F30%20passing-22c55e?style=flat-square)](backend/tests)
 [![SDK Tests](https://img.shields.io/badge/sdk%20tests-9%2F9%20passing-22c55e?style=flat-square)](sdk/test)
 
-[🌐 Landing page](index.html) · [🏗 Architecture](docs/ARCHITECTURE.md) · [📜 Claims Catalogue](docs/CLAIMS.md) · [⚖️ The Honest Caveat](#-the-one-honest-caveat)
+[🌐 Live site](https://zk-india.vercel.app) · [▶️ Demo video](https://youtu.be/oxVnIlDK9AM) · [🏗 Architecture](docs/ARCHITECTURE.md) · [📜 Claims Catalogue](docs/CLAIMS.md) · [⚖️ The Honest Caveat](#-the-one-honest-caveat)
 
 </div>
 
